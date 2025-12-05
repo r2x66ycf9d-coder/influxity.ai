@@ -67,3 +67,9 @@
 - [ ] Create deployment guide
 - [ ] Write user documentation
 - [ ] Prepare launch report
+
+## Branding
+- [x] Extract logo from PDF and convert to web formats
+- [x] Apply actual Influxity logo throughout site
+- [x] Update color scheme to match brand colors (purple to gold gradient)
+- [x] Create favicon from logo
