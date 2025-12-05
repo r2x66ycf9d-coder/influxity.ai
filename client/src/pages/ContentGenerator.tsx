@@ -11,6 +11,7 @@ import { Loader2, Copy, Check, FileText } from "lucide-react";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { DashboardLayout } from "@/components/DashboardNav";
 
 type ContentType = "email_campaign" | "landing_page" | "social_media" | "blog_post" | "product_launch" | "case_study" | "faq";
 

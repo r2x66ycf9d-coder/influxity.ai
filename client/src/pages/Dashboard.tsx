@@ -9,6 +9,7 @@ import { Loader2, Send, Plus, MessageSquare } from "lucide-react";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { DashboardLayout } from "@/components/DashboardNav";
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -75,9 +76,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <DashboardLayout>
       <div className="flex h-screen">
-        {/* Sidebar */}
+        {/* Conversation Sidebar */}
         <div className="w-64 border-r border-border bg-card/50 flex flex-col">
           <div className="p-4 border-b border-border">
             <Button onClick={handleNewConversation} className="w-full" disabled={createConversation.isPending}>
@@ -189,6 +190,6 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

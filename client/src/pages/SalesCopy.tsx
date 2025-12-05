@@ -10,6 +10,7 @@ import { Loader2, Copy, Check, Sparkles } from "lucide-react";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { DashboardLayout } from "@/components/DashboardNav";
 
 type CopyType = "headline" | "cta" | "description" | "product";
 

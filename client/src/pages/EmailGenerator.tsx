@@ -11,6 +11,7 @@ import { Loader2, Copy, Check, Mail } from "lucide-react";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { DashboardLayout } from "@/components/DashboardNav";
 
 type EmailType = "sales" | "support" | "marketing" | "followup";
 type Tone = "professional" | "friendly" | "casual";
@@ -66,7 +67,8 @@ export default function EmailGenerator() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <DashboardLayout>
+      <div className="min-h-screen bg-background p-6">
       <div className="container max-w-6xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -189,6 +191,7 @@ export default function EmailGenerator() {
           </Tabs>
         </Card>
       </div>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

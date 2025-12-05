@@ -10,6 +10,7 @@ import { Loader2, BarChart3, TrendingUp } from "lucide-react";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { DashboardLayout } from "@/components/DashboardNav";
 
 type AnalysisType = "sales" | "customer_behavior" | "operational_efficiency" | "roi" | "competitive" | "growth";
 
