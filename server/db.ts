@@ -1,11 +1,23 @@
-import { eq } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import {
+  InsertUser,
+  users,
+  subscriptions,
+  conversations,
+  messages,
+  generatedContent,
+  analysisResults,
+  InsertSubscription,
+  InsertConversation,
+  InsertMessage,
+  InsertGeneratedContent,
+  InsertAnalysisResult,
+} from "../drizzle/schema";
+import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -17,6 +29,8 @@ export async function getDb() {
   }
   return _db;
 }
+
+// ===== User Management =====
 
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
@@ -56,8 +70,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values.role = user.role;
       updateSet.role = user.role;
     } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
+      values.role = "admin";
+      updateSet.role = "admin";
     }
 
     if (!values.lastSignedIn) {
@@ -89,4 +103,127 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ===== Subscription Management =====
+
+export async function createSubscription(subscription: InsertSubscription) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(subscriptions).values(subscription);
+  return result;
+}
+
+export async function getUserSubscription(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.userId, userId))
+    .orderBy(desc(subscriptions.createdAt))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateSubscription(id: number, updates: Partial<InsertSubscription>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(subscriptions).set(updates).where(eq(subscriptions.id, id));
+}
+
+// ===== Conversation Management =====
+
+export async function createConversation(conversation: InsertConversation) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(conversations).values(conversation);
+  return result;
+}
+
+export async function getUserConversations(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(conversations)
+    .where(eq(conversations.userId, userId))
+    .orderBy(desc(conversations.updatedAt));
+}
+
+export async function getConversationMessages(conversationId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(messages).where(eq(messages.conversationId, conversationId));
+}
+
+export async function createMessage(message: InsertMessage) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(messages).values(message);
+  return result;
+}
+
+// ===== Generated Content =====
+
+export async function saveGeneratedContent(content: InsertGeneratedContent) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(generatedContent).values(content);
+  return result;
+}
+
+export async function getUserGeneratedContent(userId: number, type?: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  if (type) {
+    return await db
+      .select()
+      .from(generatedContent)
+      .where(and(eq(generatedContent.userId, userId), eq(generatedContent.type, type as any)))
+      .orderBy(desc(generatedContent.createdAt));
+  }
+
+  return await db
+    .select()
+    .from(generatedContent)
+    .where(eq(generatedContent.userId, userId))
+    .orderBy(desc(generatedContent.createdAt));
+}
+
+// ===== Analysis Results =====
+
+export async function saveAnalysisResult(analysis: InsertAnalysisResult) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(analysisResults).values(analysis);
+  return result;
+}
+
+export async function getUserAnalysisResults(userId: number, analysisType?: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  if (analysisType) {
+    return await db
+      .select()
+      .from(analysisResults)
+      .where(and(eq(analysisResults.userId, userId), eq(analysisResults.analysisType, analysisType as any)))
+      .orderBy(desc(analysisResults.createdAt));
+  }
+
+  return await db
+    .select()
+    .from(analysisResults)
+    .where(eq(analysisResults.userId, userId))
+    .orderBy(desc(analysisResults.createdAt));
+}
