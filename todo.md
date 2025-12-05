@@ -76,3 +76,8 @@
 
 ## Homepage Updates
 - [x] Add large Influxity logo as hero centerpiece on homepage
+
+## Deployment
+- [ ] Push code to GitHub repository
+- [ ] Publish via Manus UI
+- [ ] Configure DNS for influxity.ai domain
