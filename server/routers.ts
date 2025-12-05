@@ -5,6 +5,9 @@ import { stripeRouter } from "./stripeRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
+import { aiCache } from "./_core/cache";
+import { logger } from "./_core/logger";
+import { sanitize } from "./_core/security";
 import {
   createConversation,
   getUserConversations,
@@ -65,11 +68,16 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        const startTime = Date.now();
+        
+        // Sanitize user input
+        const sanitizedMessage = sanitize.aiPrompt(input.message);
+        
         // Save user message
         await createMessage({
           conversationId: input.conversationId,
           role: "user",
-          content: input.message,
+          content: sanitizedMessage,
         });
 
         // Get conversation history
@@ -88,11 +96,15 @@ export const appRouter = router({
           })),
         ];
 
+        logger.aiRequest('chat', ctx.user.id);
+        
         // Get AI response
         const response = await invokeLLM({ messages });
         const rawAiMessage = response.choices[0]?.message?.content || "I apologize, but I couldn't generate a response.";
         const aiMessage = typeof rawAiMessage === 'string' ? rawAiMessage : JSON.stringify(rawAiMessage);
 
+        logger.aiResponse('chat', Date.now() - startTime, ctx.user.id);
+        
         // Save AI response
         await createMessage({
           conversationId: input.conversationId,
@@ -115,13 +127,26 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        const startTime = Date.now();
+        const sanitizedContext = sanitize.aiPrompt(input.context);
+        
+        // Check cache first
+        const cacheKey = `${input.type}_${input.tone || 'professional'}_${sanitizedContext}`;
+        const cached = aiCache.get('email', cacheKey, ctx.user.id);
+        if (cached) {
+          logger.aiRequest(`email_${input.type}`, ctx.user.id, true);
+          return { content: cached };
+        }
+        
         const prompts = {
-          sales: `Generate a professional sales email based on this context: ${input.context}. Make it compelling and action-oriented.`,
-          support: `Generate a helpful support email based on this context: ${input.context}. Be empathetic and solution-focused.`,
-          marketing: `Generate an engaging marketing email based on this context: ${input.context}. Focus on benefits and include a clear call-to-action.`,
-          followup: `Generate a follow-up email based on this context: ${input.context}. Be polite and reference previous interaction.`,
+          sales: `Generate a professional sales email based on this context: ${sanitizedContext}. Make it compelling and action-oriented.`,
+          support: `Generate a helpful support email based on this context: ${sanitizedContext}. Be empathetic and solution-focused.`,
+          marketing: `Generate an engaging marketing email based on this context: ${sanitizedContext}. Focus on benefits and include a clear call-to-action.`,
+          followup: `Generate a follow-up email based on this context: ${sanitizedContext}. Be polite and reference previous interaction.`,
         };
 
+        logger.aiRequest(`email_${input.type}`, ctx.user.id);
+        
         const response = await invokeLLM({
           messages: [
             {
@@ -135,11 +160,16 @@ export const appRouter = router({
         const rawContent = response.choices[0]?.message?.content || "";
         const content = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
 
+        logger.aiResponse(`email_${input.type}`, Date.now() - startTime, ctx.user.id);
+        
+        // Cache the response
+        aiCache.set('email', cacheKey, content, ctx.user.id);
+        
         // Save to database
         await saveGeneratedContent({
           userId: ctx.user.id,
           type: `email_${input.type}` as any,
-          prompt: input.context,
+          prompt: sanitizedContext,
           content,
         });
 

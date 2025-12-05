@@ -163,8 +163,8 @@ export default function Dashboard() {
                         }
                       }}
                     />
-                    <Button type="submit" disabled={!message.trim() || isSending} size="lg">
-                      <Send className="w-4 h-4" />
+                    <Button type="submit" size="icon" disabled={!message.trim() || !currentConversationId || isSending}>
+                      {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </Button>
                   </div>
                 </form>
