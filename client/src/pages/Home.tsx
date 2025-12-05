@@ -101,6 +101,10 @@ export default function Home() {
       <section className="py-20 md:py-32">
         <div className="container">
           <div className="max-w-4xl mx-auto text-center space-y-8">
+            {/* Large Centered Logo */}
+            <div className="flex justify-center mb-8">
+              <img src="/logo.png" alt="Influxity" className="w-64 md:w-80 h-auto" />
+            </div>
             <Badge variant="secondary" className="mb-4">
               <Sparkles className="w-3 h-3 mr-1" />
               Join 500+ Businesses Saving Time & Money

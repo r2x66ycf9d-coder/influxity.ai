@@ -73,3 +73,6 @@
 - [x] Apply actual Influxity logo throughout site
 - [x] Update color scheme to match brand colors (purple to gold gradient)
 - [x] Create favicon from logo
+
+## Homepage Updates
+- [x] Add large Influxity logo as hero centerpiece on homepage
