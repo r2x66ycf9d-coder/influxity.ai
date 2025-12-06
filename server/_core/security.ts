@@ -58,10 +58,12 @@ export const corsConfig = cors({
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
-    // Allow Manus domains and localhost
+    // Allow Influxity, Manus domains and localhost
     const allowedOrigins = [
-      /\.manus\.space$/,
-      /\.manusvm\.computer$/,
+      /^https:\/\/influxity\.ai$/,
+      /^https:\/\/.*\.influxity\.ai$/,
+      /^https:\/\/.*\.manus\.space$/,
+      /^https:\/\/.*\.manusvm\.computer$/,
       /^https?:\/\/localhost(:\d+)?$/,
       /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
     ];

@@ -70,49 +70,54 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const startTime = Date.now();
         
-        // Sanitize user input
-        const sanitizedMessage = sanitize.aiPrompt(input.message);
-        
-        // Save user message
-        await createMessage({
-          conversationId: input.conversationId,
-          role: "user",
-          content: sanitizedMessage,
-        });
+        try {
+          // Sanitize user input
+          const sanitizedMessage = sanitize.aiPrompt(input.message);
+          
+          // Save user message
+          await createMessage({
+            conversationId: input.conversationId,
+            role: "user",
+            content: sanitizedMessage,
+          });
 
-        // Get conversation history
-        const history = await getConversationMessages(input.conversationId);
+          // Get conversation history
+          const history = await getConversationMessages(input.conversationId);
 
-        // Build messages for LLM
-        const messages = [
-          {
-            role: "system" as const,
-            content:
-              "You are an AI business assistant for Influxity.ai. Help users with business automation, provide insights, and answer questions about AI-powered business solutions.",
-          },
-          ...history.slice(-10).map(msg => ({
-            role: msg.role as "user" | "assistant",
-            content: msg.content,
-          })),
-        ];
+          // Build messages for LLM
+          const messages = [
+            {
+              role: "system" as const,
+              content:
+                "You are an AI business assistant for Influxity.ai. Help users with business automation, provide insights, and answer questions about AI-powered business solutions.",
+            },
+            ...history.slice(-10).map(msg => ({
+              role: msg.role as "user" | "assistant",
+              content: msg.content,
+            })),
+          ];
 
-        logger.aiRequest('chat', ctx.user.id);
-        
-        // Get AI response
-        const response = await invokeLLM({ messages });
-        const rawAiMessage = response.choices[0]?.message?.content || "I apologize, but I couldn't generate a response.";
-        const aiMessage = typeof rawAiMessage === 'string' ? rawAiMessage : JSON.stringify(rawAiMessage);
+          logger.aiRequest('chat', ctx.user.id);
+          
+          // Get AI response
+          const response = await invokeLLM({ messages });
+          const rawAiMessage = response.choices[0]?.message?.content || "I apologize, but I couldn't generate a response.";
+          const aiMessage = typeof rawAiMessage === 'string' ? rawAiMessage : JSON.stringify(rawAiMessage);
 
-        logger.aiResponse('chat', Date.now() - startTime, ctx.user.id);
-        
-        // Save AI response
-        await createMessage({
-          conversationId: input.conversationId,
-          role: "assistant",
-          content: aiMessage,
-        });
+          logger.aiResponse('chat', Date.now() - startTime, ctx.user.id);
+          
+          // Save AI response
+          await createMessage({
+            conversationId: input.conversationId,
+            role: "assistant",
+            content: aiMessage,
+          });
 
-        return { message: aiMessage };
+          return { message: aiMessage };
+        } catch (error) {
+          logger.error('Failed to process chat message', error, { userId: ctx.user.id, conversationId: input.conversationId });
+          throw new Error('Failed to process message. Please try again.');
+        }
       }),
   }),
 
@@ -128,52 +133,58 @@ export const appRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         const startTime = Date.now();
-        const sanitizedContext = sanitize.aiPrompt(input.context);
         
-        // Check cache first
-        const cacheKey = `${input.type}_${input.tone || 'professional'}_${sanitizedContext}`;
-        const cached = aiCache.get('email', cacheKey, ctx.user.id);
-        if (cached) {
-          logger.aiRequest(`email_${input.type}`, ctx.user.id, true);
-          return { content: cached };
+        try {
+          const sanitizedContext = sanitize.aiPrompt(input.context);
+          
+          // Check cache first
+          const cacheKey = `${input.type}_${input.tone || 'professional'}_${sanitizedContext}`;
+          const cached = aiCache.get('email', cacheKey, ctx.user.id);
+          if (cached) {
+            logger.aiRequest(`email_${input.type}`, ctx.user.id, true);
+            return { content: cached };
+          }
+          
+          const prompts = {
+            sales: `Generate a professional sales email based on this context: ${sanitizedContext}. Make it compelling and action-oriented.`,
+            support: `Generate a helpful support email based on this context: ${sanitizedContext}. Be empathetic and solution-focused.`,
+            marketing: `Generate an engaging marketing email based on this context: ${sanitizedContext}. Focus on benefits and include a clear call-to-action.`,
+            followup: `Generate a follow-up email based on this context: ${sanitizedContext}. Be polite and reference previous interaction.`,
+          };
+
+          logger.aiRequest(`email_${input.type}`, ctx.user.id);
+          
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `You are an expert email copywriter. Generate ${input.type} emails that are ${input.tone || "professional"} and effective.`,
+              },
+              { role: "user", content: prompts[input.type] },
+            ],
+          });
+
+          const rawContent = response.choices[0]?.message?.content || "";
+          const content = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
+
+          logger.aiResponse(`email_${input.type}`, Date.now() - startTime, ctx.user.id);
+          
+          // Cache the response
+          aiCache.set('email', cacheKey, content, ctx.user.id);
+          
+          // Save to database
+          await saveGeneratedContent({
+            userId: ctx.user.id,
+            type: `email_${input.type}` as any,
+            prompt: sanitizedContext,
+            content,
+          });
+
+          return { content };
+        } catch (error) {
+          logger.error(`Failed to generate ${input.type} email`, error, { userId: ctx.user.id });
+          throw new Error('Failed to generate email. Please try again.');
         }
-        
-        const prompts = {
-          sales: `Generate a professional sales email based on this context: ${sanitizedContext}. Make it compelling and action-oriented.`,
-          support: `Generate a helpful support email based on this context: ${sanitizedContext}. Be empathetic and solution-focused.`,
-          marketing: `Generate an engaging marketing email based on this context: ${sanitizedContext}. Focus on benefits and include a clear call-to-action.`,
-          followup: `Generate a follow-up email based on this context: ${sanitizedContext}. Be polite and reference previous interaction.`,
-        };
-
-        logger.aiRequest(`email_${input.type}`, ctx.user.id);
-        
-        const response = await invokeLLM({
-          messages: [
-            {
-              role: "system",
-              content: `You are an expert email copywriter. Generate ${input.type} emails that are ${input.tone || "professional"} and effective.`,
-            },
-            { role: "user", content: prompts[input.type] },
-          ],
-        });
-
-        const rawContent = response.choices[0]?.message?.content || "";
-        const content = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
-
-        logger.aiResponse(`email_${input.type}`, Date.now() - startTime, ctx.user.id);
-        
-        // Cache the response
-        aiCache.set('email', cacheKey, content, ctx.user.id);
-        
-        // Save to database
-        await saveGeneratedContent({
-          userId: ctx.user.id,
-          type: `email_${input.type}` as any,
-          prompt: sanitizedContext,
-          content,
-        });
-
-        return { content };
       }),
 
     getHistory: protectedProcedure
@@ -195,34 +206,39 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const prompts = {
-          headline: `Create 5 compelling headlines for: ${input.product}${input.targetAudience ? ` targeting ${input.targetAudience}` : ""}`,
-          cta: `Generate 5 powerful call-to-action phrases for: ${input.product}`,
-          description: `Write a persuasive product description for: ${input.product}${input.targetAudience ? ` targeting ${input.targetAudience}` : ""}`,
-          product: `Create a complete product description with features, benefits, and use cases for: ${input.product}`,
-        };
+        try {
+          const prompts = {
+            headline: `Create 5 compelling headlines for: ${input.product}${input.targetAudience ? ` targeting ${input.targetAudience}` : ""}`,
+            cta: `Generate 5 powerful call-to-action phrases for: ${input.product}`,
+            description: `Write a persuasive product description for: ${input.product}${input.targetAudience ? ` targeting ${input.targetAudience}` : ""}`,
+            product: `Create a complete product description with features, benefits, and use cases for: ${input.product}`,
+          };
 
-        const response = await invokeLLM({
-          messages: [
-            {
-              role: "system",
-              content: "You are an expert sales copywriter. Create compelling, conversion-focused copy that drives action.",
-            },
-            { role: "user", content: prompts[input.type] },
-          ],
-        });
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: "You are an expert sales copywriter. Create compelling, conversion-focused copy that drives action.",
+              },
+              { role: "user", content: prompts[input.type] },
+            ],
+          });
 
-        const rawContent = response.choices[0]?.message?.content || "";
-        const content = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
+          const rawContent = response.choices[0]?.message?.content || "";
+          const content = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
 
-        await saveGeneratedContent({
-          userId: ctx.user.id,
-          type: input.type === "product" ? "product_description" : "sales_copy",
-          prompt: input.product,
-          content,
-        });
+          await saveGeneratedContent({
+            userId: ctx.user.id,
+            type: input.type === "product" ? "product_description" : "sales_copy",
+            prompt: input.product,
+            content,
+          });
 
-        return { content };
+          return { content };
+        } catch (error) {
+          logger.error(`Failed to generate ${input.type} sales copy`, error, { userId: ctx.user.id });
+          throw new Error('Failed to generate sales copy. Please try again.');
+        }
       }),
 
     getHistory: protectedProcedure.query(async ({ ctx }) => {
@@ -241,37 +257,42 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const prompts = {
-          email_campaign: `Create a 5-email campaign sequence for: ${input.topic}. ${input.details || ""}`,
-          landing_page: `Write complete landing page copy for: ${input.topic}. Include headline, subheadline, features, benefits, and CTA. ${input.details || ""}`,
-          social_media: `Generate a 7-day social media content calendar for: ${input.topic}. ${input.details || ""}`,
-          blog_post: `Write a comprehensive blog post about: ${input.topic}. ${input.details || ""}`,
-          product_launch: `Create a product launch announcement for: ${input.topic}. ${input.details || ""}`,
-          case_study: `Write a customer case study for: ${input.topic}. ${input.details || ""}`,
-          faq: `Generate a comprehensive FAQ section for: ${input.topic}. ${input.details || ""}`,
-        };
+        try {
+          const prompts = {
+            email_campaign: `Create a 5-email campaign sequence for: ${input.topic}. ${input.details || ""}`,
+            landing_page: `Write complete landing page copy for: ${input.topic}. Include headline, subheadline, features, benefits, and CTA. ${input.details || ""}`,
+            social_media: `Generate a 7-day social media content calendar for: ${input.topic}. ${input.details || ""}`,
+            blog_post: `Write a comprehensive blog post about: ${input.topic}. ${input.details || ""}`,
+            product_launch: `Create a product launch announcement for: ${input.topic}. ${input.details || ""}`,
+            case_study: `Write a customer case study for: ${input.topic}. ${input.details || ""}`,
+            faq: `Generate a comprehensive FAQ section for: ${input.topic}. ${input.details || ""}`,
+          };
 
-        const response = await invokeLLM({
-          messages: [
-            {
-              role: "system",
-              content: "You are an expert content strategist and copywriter. Create engaging, high-quality content that resonates with audiences.",
-            },
-            { role: "user", content: prompts[input.type] },
-          ],
-        });
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: "You are an expert content strategist and copywriter. Create engaging, high-quality content that resonates with audiences.",
+              },
+              { role: "user", content: prompts[input.type] },
+            ],
+          });
 
-        const rawContent = response.choices[0]?.message?.content || "";
-        const content = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
+          const rawContent = response.choices[0]?.message?.content || "";
+          const content = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
 
-        await saveGeneratedContent({
-          userId: ctx.user.id,
-          type: input.type as any,
-          prompt: input.topic,
-          content,
-        });
+          await saveGeneratedContent({
+            userId: ctx.user.id,
+            type: input.type as any,
+            prompt: input.topic,
+            content,
+          });
 
-        return { content };
+          return { content };
+        } catch (error) {
+          logger.error(`Failed to generate ${input.type} content`, error, { userId: ctx.user.id });
+          throw new Error('Failed to generate content. Please try again.');
+        }
       }),
 
     getHistory: protectedProcedure
@@ -296,42 +317,47 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const prompts = {
-          sales: `Analyze this sales data and provide actionable insights: ${input.data}. ${input.context || ""}`,
-          customer_behavior: `Analyze customer behavior patterns and provide segmentation insights: ${input.data}. ${input.context || ""}`,
-          operational_efficiency: `Analyze operational efficiency and identify improvement opportunities: ${input.data}. ${input.context || ""}`,
-          roi: `Calculate ROI and provide financial analysis: ${input.data}. ${input.context || ""}`,
-          competitive: `Perform competitive analysis and identify strategic opportunities: ${input.data}. ${input.context || ""}`,
-          growth: `Analyze growth potential and provide strategic recommendations: ${input.data}. ${input.context || ""}`,
-        };
+        try {
+          const prompts = {
+            sales: `Analyze this sales data and provide actionable insights: ${input.data}. ${input.context || ""}`,
+            customer_behavior: `Analyze customer behavior patterns and provide segmentation insights: ${input.data}. ${input.context || ""}`,
+            operational_efficiency: `Analyze operational efficiency and identify improvement opportunities: ${input.data}. ${input.context || ""}`,
+            roi: `Calculate ROI and provide financial analysis: ${input.data}. ${input.context || ""}`,
+            competitive: `Perform competitive analysis and identify strategic opportunities: ${input.data}. ${input.context || ""}`,
+            growth: `Analyze growth potential and provide strategic recommendations: ${input.data}. ${input.context || ""}`,
+          };
 
-        const response = await invokeLLM({
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are an expert business analyst. Provide detailed, data-driven insights with specific recommendations. Format your response with clear sections: Summary, Key Insights, and Recommendations.",
-            },
-            { role: "user", content: prompts[input.type] },
-          ],
-        });
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are an expert business analyst. Provide detailed, data-driven insights with specific recommendations. Format your response with clear sections: Summary, Key Insights, and Recommendations.",
+              },
+              { role: "user", content: prompts[input.type] },
+            ],
+          });
 
-        const fullResponse = response.choices[0]?.message?.content || "";
-        const responseText = typeof fullResponse === 'string' ? fullResponse : JSON.stringify(fullResponse);
+          const fullResponse = response.choices[0]?.message?.content || "";
+          const responseText = typeof fullResponse === 'string' ? fullResponse : JSON.stringify(fullResponse);
 
-        // Extract insights and recommendations
-        const insights = responseText;
-        const recommendations = responseText.includes("Recommendations") ? responseText.split("Recommendations")[1] || "" : "";
+          // Extract insights and recommendations
+          const insights = responseText;
+          const recommendations = responseText.includes("Recommendations") ? responseText.split("Recommendations")[1] || "" : "";
 
-        await saveAnalysisResult({
-          userId: ctx.user.id,
-          analysisType: input.type,
-          inputData: input.data,
-          insights,
-          recommendations,
-        });
+          await saveAnalysisResult({
+            userId: ctx.user.id,
+            analysisType: input.type,
+            inputData: input.data,
+            insights,
+            recommendations,
+          });
 
-        return { insights, recommendations };
+          return { insights, recommendations };
+        } catch (error) {
+          logger.error(`Failed to analyze ${input.type} data`, error, { userId: ctx.user.id });
+          throw new Error('Failed to analyze data. Please try again.');
+        }
       }),
 
     getHistory: protectedProcedure
