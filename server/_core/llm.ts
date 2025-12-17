@@ -66,6 +66,7 @@ export type InvokeParams = {
   output_schema?: OutputSchema;
   responseFormat?: ResponseFormat;
   response_format?: ResponseFormat;
+  stream?: boolean;
 };
 
 export type ToolCall = {
@@ -339,5 +340,126 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
       throw new Error(`AI service error: ${error.message}`);
     }
     throw new Error('AI service encountered an unexpected error');
+  }
+}
+
+export type StreamChunk = {
+  id: string;
+  created: number;
+  model: string;
+  choices: Array<{
+    index: number;
+    delta: {
+      role?: Role;
+      content?: string;
+      tool_calls?: ToolCall[];
+    };
+    finish_reason: string | null;
+  }>;
+};
+
+export async function* invokeLLMStream(params: InvokeParams): AsyncGenerator<StreamChunk, void, unknown> {
+  try {
+    assertApiKey();
+
+    const {
+      messages,
+      tools,
+      toolChoice,
+      tool_choice,
+      outputSchema,
+      output_schema,
+      responseFormat,
+      response_format,
+    } = params;
+
+    const payload: Record<string, unknown> = {
+      model: "gemini-2.5-flash",
+      messages: messages.map(normalizeMessage),
+      stream: true,
+    };
+
+    if (tools && tools.length > 0) {
+      payload.tools = tools;
+    }
+
+    const normalizedToolChoice = normalizeToolChoice(
+      toolChoice || tool_choice,
+      tools
+    );
+    if (normalizedToolChoice) {
+      payload.tool_choice = normalizedToolChoice;
+    }
+
+    payload.max_tokens = 32768;
+    payload.thinking = {
+      "budget_tokens": 128
+    };
+
+    const normalizedResponseFormat = normalizeResponseFormat({
+      responseFormat,
+      response_format,
+      outputSchema,
+      output_schema,
+    });
+
+    if (normalizedResponseFormat) {
+      payload.response_format = normalizedResponseFormat;
+    }
+
+    const response = await fetch(resolveApiUrl(), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${ENV.forgeApiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `LLM stream failed: ${response.status} ${response.statusText} – ${errorText}`
+      );
+    }
+
+    if (!response.body) {
+      throw new Error('Response body is null');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed === 'data: [DONE]') continue;
+        
+        if (trimmed.startsWith('data: ')) {
+          try {
+            const jsonStr = trimmed.slice(6);
+            const chunk = JSON.parse(jsonStr) as StreamChunk;
+            yield chunk;
+          } catch (e) {
+            console.error('[LLM Stream Parse Error]', e);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('[LLM Stream Error]', error);
+    if (error instanceof Error) {
+      throw new Error(`AI streaming error: ${error.message}`);
+    }
+    throw new Error('AI streaming encountered an unexpected error');
   }
 }

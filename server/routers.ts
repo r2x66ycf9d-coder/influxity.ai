@@ -4,7 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { stripeRouter } from "./stripeRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { invokeLLM } from "./_core/llm";
+import { invokeLLM, invokeLLMStream } from "./_core/llm";
 import { aiCache } from "./_core/cache";
 import { logger } from "./_core/logger";
 import { sanitize } from "./_core/security";
@@ -59,7 +59,74 @@ export const appRouter = router({
         return await getConversationMessages(input.conversationId);
       }),
 
-    // Send a message and get AI response
+    // Send a message and get AI response (streaming)
+    sendMessageStream: protectedProcedure
+      .input(
+        z.object({
+          conversationId: z.number(),
+          message: z.string(),
+        })
+      )
+      .subscription(async function* ({ ctx, input }) {
+        const startTime = Date.now();
+        
+        try {
+          // Sanitize user input
+          const sanitizedMessage = sanitize.aiPrompt(input.message);
+          
+          // Save user message
+          await createMessage({
+            conversationId: input.conversationId,
+            role: "user",
+            content: sanitizedMessage,
+          });
+
+          // Get conversation history
+          const history = await getConversationMessages(input.conversationId);
+
+          // Build messages for LLM
+          const messages = [
+            {
+              role: "system" as const,
+              content:
+                "You are an AI business assistant for Influxity.ai. Help users with business automation, provide insights, and answer questions about AI-powered business solutions.",
+            },
+            ...history.slice(-10).map(msg => ({
+              role: msg.role as "user" | "assistant",
+              content: msg.content,
+            })),
+          ];
+
+          logger.aiRequest('chat_stream', ctx.user.id);
+          
+          let fullResponse = '';
+          
+          // Stream AI response
+          for await (const chunk of invokeLLMStream({ messages })) {
+            const content = chunk.choices[0]?.delta?.content;
+            if (content) {
+              fullResponse += content;
+              yield { content, done: false };
+            }
+          }
+
+          logger.aiResponse('chat_stream', Date.now() - startTime, ctx.user.id);
+          
+          // Save complete AI response
+          await createMessage({
+            conversationId: input.conversationId,
+            role: "assistant",
+            content: fullResponse,
+          });
+
+          yield { content: '', done: true };
+        } catch (error) {
+          logger.error('chat_stream', error, { userId: ctx.user.id });
+          throw new Error('Failed to stream AI response. Please try again.');
+        }
+      }),
+
+    // Send a message and get AI response (non-streaming fallback)
     sendMessage: protectedProcedure
       .input(
         z.object({
