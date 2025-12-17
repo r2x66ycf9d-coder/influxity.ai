@@ -266,67 +266,78 @@ const normalizeResponseFormat = ({
 };
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
-  assertApiKey();
+  try {
+    assertApiKey();
 
-  const {
-    messages,
-    tools,
-    toolChoice,
-    tool_choice,
-    outputSchema,
-    output_schema,
-    responseFormat,
-    response_format,
-  } = params;
+    const {
+      messages,
+      tools,
+      toolChoice,
+      tool_choice,
+      outputSchema,
+      output_schema,
+      responseFormat,
+      response_format,
+    } = params;
 
-  const payload: Record<string, unknown> = {
-    model: "gemini-2.5-flash",
-    messages: messages.map(normalizeMessage),
-  };
+    const payload: Record<string, unknown> = {
+      model: "gemini-2.5-flash",
+      messages: messages.map(normalizeMessage),
+    };
 
-  if (tools && tools.length > 0) {
-    payload.tools = tools;
-  }
+    if (tools && tools.length > 0) {
+      payload.tools = tools;
+    }
 
-  const normalizedToolChoice = normalizeToolChoice(
-    toolChoice || tool_choice,
-    tools
-  );
-  if (normalizedToolChoice) {
-    payload.tool_choice = normalizedToolChoice;
-  }
-
-  payload.max_tokens = 32768
-  payload.thinking = {
-    "budget_tokens": 128
-  }
-
-  const normalizedResponseFormat = normalizeResponseFormat({
-    responseFormat,
-    response_format,
-    outputSchema,
-    output_schema,
-  });
-
-  if (normalizedResponseFormat) {
-    payload.response_format = normalizedResponseFormat;
-  }
-
-  const response = await fetch(resolveApiUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
+    const normalizedToolChoice = normalizeToolChoice(
+      toolChoice || tool_choice,
+      tools
     );
-  }
+    if (normalizedToolChoice) {
+      payload.tool_choice = normalizedToolChoice;
+    }
 
-  return (await response.json()) as InvokeResult;
+    payload.max_tokens = 32768
+    payload.thinking = {
+      "budget_tokens": 128
+    }
+
+    const normalizedResponseFormat = normalizeResponseFormat({
+      responseFormat,
+      response_format,
+      outputSchema,
+      output_schema,
+    });
+
+    if (normalizedResponseFormat) {
+      payload.response_format = normalizedResponseFormat;
+    }
+
+    const response = await fetch(resolveApiUrl(), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${ENV.forgeApiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
+      );
+    }
+
+    return (await response.json()) as InvokeResult;
+  } catch (error) {
+    // Log the error for debugging
+    console.error('[LLM Error]', error);
+    
+    // Re-throw with more context
+    if (error instanceof Error) {
+      throw new Error(`AI service error: ${error.message}`);
+    }
+    throw new Error('AI service encountered an unexpected error');
+  }
 }

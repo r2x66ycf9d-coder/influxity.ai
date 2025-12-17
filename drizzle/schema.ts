@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, index } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -13,7 +13,9 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
-});
+}, (table) => ({
+  emailIdx: index("email_idx").on(table.email),
+}));
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -33,7 +35,10 @@ export const subscriptions = mysqlTable("subscriptions", {
   cancelAtPeriodEnd: boolean("cancelAtPeriodEnd").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("user_id_idx").on(table.userId),
+  stripeCustomerIdx: index("stripe_customer_idx").on(table.stripeCustomerId),
+}));
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = typeof subscriptions.$inferInsert;
@@ -47,7 +52,9 @@ export const conversations = mysqlTable("conversations", {
   title: varchar("title", { length: 255 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("user_id_idx").on(table.userId),
+}));
 
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = typeof conversations.$inferInsert;
@@ -61,7 +68,9 @@ export const messages = mysqlTable("messages", {
   role: mysqlEnum("role", ["user", "assistant", "system"]).notNull(),
   content: text("content").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  conversationIdIdx: index("conversation_id_idx").on(table.conversationId),
+}));
 
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = typeof messages.$inferInsert;
@@ -90,7 +99,10 @@ export const generatedContent = mysqlTable("generatedContent", {
   prompt: text("prompt").notNull(),
   content: text("content").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("user_id_idx").on(table.userId),
+  typeIdx: index("type_idx").on(table.type),
+}));
 
 export type GeneratedContent = typeof generatedContent.$inferSelect;
 export type InsertGeneratedContent = typeof generatedContent.$inferInsert;
@@ -113,7 +125,10 @@ export const analysisResults = mysqlTable("analysisResults", {
   insights: text("insights").notNull(),
   recommendations: text("recommendations"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("user_id_idx").on(table.userId),
+  analysisTypeIdx: index("analysis_type_idx").on(table.analysisType),
+}));
 
 export type AnalysisResult = typeof analysisResults.$inferSelect;
 export type InsertAnalysisResult = typeof analysisResults.$inferInsert;
