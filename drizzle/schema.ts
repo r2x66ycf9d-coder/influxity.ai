@@ -10,6 +10,9 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  notifyEmail: boolean("notifyEmail").default(true).notNull(),
+  notifySms: boolean("notifySms").default(false).notNull(),
+  notifyInApp: boolean("notifyInApp").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -132,3 +135,44 @@ export const analysisResults = mysqlTable("analysisResults", {
 
 export type AnalysisResult = typeof analysisResults.$inferSelect;
 export type InsertAnalysisResult = typeof analysisResults.$inferInsert;
+
+/**
+ * Deceased persons for IMissU.app grief support platform
+ */
+export const deceasedPersons = mysqlTable("deceasedPersons", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  relationship: varchar("relationship", { length: 100 }),
+  dateOfBirth: timestamp("dateOfBirth"),
+  dateOfDeath: timestamp("dateOfDeath"),
+  memorialPageUrl: varchar("memorialPageUrl", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("user_id_idx").on(table.userId),
+  dateOfBirthIdx: index("date_of_birth_idx").on(table.dateOfBirth),
+}));
+
+export type DeceasedPerson = typeof deceasedPersons.$inferSelect;
+export type InsertDeceasedPerson = typeof deceasedPersons.$inferInsert;
+
+/**
+ * Birthday notification logs for tracking sent notifications
+ */
+export const birthdayNotificationLogs = mysqlTable("birthdayNotificationLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  deceasedPersonId: int("deceasedPersonId").notNull(),
+  userId: int("userId").notNull(),
+  notificationType: mysqlEnum("notificationType", ["email", "sms", "in_app"]).notNull(),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+  status: mysqlEnum("status", ["sent", "failed"]).notNull(),
+  errorMessage: text("errorMessage"),
+}, (table) => ({
+  deceasedPersonIdIdx: index("deceased_person_id_idx").on(table.deceasedPersonId),
+  userIdIdx: index("user_id_idx").on(table.userId),
+  sentAtIdx: index("sent_at_idx").on(table.sentAt),
+}));
+
+export type BirthdayNotificationLog = typeof birthdayNotificationLogs.$inferSelect;
+export type InsertBirthdayNotificationLog = typeof birthdayNotificationLogs.$inferInsert;
