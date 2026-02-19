@@ -36,6 +36,7 @@ async function getDbConnection() {
 
 /**
  * Check if a date matches today's month and day (ignoring year)
+ * Uses UTC to avoid timezone offset issues with dates stored as midnight UTC
  */
 function isBirthdayToday(dateOfBirth) {
   if (!dateOfBirth) return false;
@@ -43,9 +44,10 @@ function isBirthdayToday(dateOfBirth) {
   const today = new Date();
   const birthDate = new Date(dateOfBirth);
   
+  // Use UTC methods to avoid local timezone shifting midnight-UTC dates to previous day
   return (
-    birthDate.getMonth() === today.getMonth() &&
-    birthDate.getDate() === today.getDate()
+    birthDate.getUTCMonth() === today.getUTCMonth() &&
+    birthDate.getUTCDate() === today.getUTCDate()
   );
 }
 
