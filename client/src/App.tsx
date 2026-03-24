@@ -1,0 +1,54 @@
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import NotFound from "@/pages/NotFound";
+import { Route, Switch } from "wouter";
+import ErrorBoundary from "./components/ErrorBoundary";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import EmailGenerator from "./pages/EmailGenerator";
+import ContentGenerator from "./pages/ContentGenerator";
+import DataAnalysis from "./pages/DataAnalysis";
+import SalesCopy from "./pages/SalesCopy";
+import Blog from "./pages/Blog";
+import Pricing from "./pages/Pricing";
+import RevenueDashboard from "./pages/RevenueDashboard";
+import Recover from "./pages/Recover";
+import Onboarding from "./pages/Onboarding";
+import AdminLeads from "./pages/AdminLeads";
+
+function Router() {
+  return (
+    <Switch>
+      <Route path={"/"} component={Home} />
+      <Route path={"/dashboard"} component={Dashboard} />
+      <Route path={"/email"} component={EmailGenerator} />
+      <Route path={"/content"} component={ContentGenerator} />
+      <Route path={"/analysis"} component={DataAnalysis} />
+      <Route path={"/sales-copy"} component={SalesCopy} />
+      <Route path={"/blog"} component={Blog} />
+      <Route path={"/pricing"} component={Pricing} />
+      <Route path={"/revenue"} component={RevenueDashboard} />
+      <Route path={"/recover"} component={Recover} />
+      <Route path={"/onboarding"} component={Onboarding} />
+      <Route path={"/admin/leads"} component={AdminLeads} />
+      <Route path={"/404"} component={NotFound} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <ThemeProvider defaultTheme="dark">
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
+  );
+}
+
+export default App;
