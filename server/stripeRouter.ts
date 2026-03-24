@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "./_core/trpc";
 import { createCheckoutSession } from "./stripe";
+import { getRevenueMetrics } from "./stripeMetrics";
 
 export const stripeRouter = router({
   createCheckout: protectedProcedure
@@ -24,4 +25,9 @@ export const stripeRouter = router({
         checkoutUrl: session.url,
       };
     }),
+
+  // Revenue metrics for Sean's private dashboard
+  getRevenueMetrics: protectedProcedure.query(async () => {
+    return await getRevenueMetrics();
+  }),
 });

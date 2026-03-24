@@ -12,6 +12,7 @@ import DataAnalysis from "./pages/DataAnalysis";
 import SalesCopy from "./pages/SalesCopy";
 import Blog from "./pages/Blog";
 import Pricing from "./pages/Pricing";
+import RevenueDashboard from "./pages/RevenueDashboard";
 
 function Router() {
   return (
@@ -24,6 +25,7 @@ function Router() {
       <Route path={"/sales-copy"} component={SalesCopy} />
       <Route path={"/blog"} component={Blog} />
       <Route path={"/pricing"} component={Pricing} />
+      <Route path={"/revenue"} component={RevenueDashboard} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

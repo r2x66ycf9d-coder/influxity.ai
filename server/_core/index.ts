@@ -10,6 +10,8 @@ import { serveStatic, setupVite } from "./vite";
 import { helmetConfig, corsConfig, apiRateLimiter, aiRateLimiter, securityErrorHandler } from "./security";
 import { healthCheck, livenessProbe, readinessProbe } from "./health";
 import { logger } from "./logger";
+import { seoRouter } from "../seoRoutes";
+import { affiliateRouter } from "../affiliateRoutes";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -42,6 +44,12 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   
+  // SEO routes — sitemap.xml and robots.txt (no rate limiting, before tRPC)
+  app.use("/", seoRouter);
+
+  // Affiliate click tracking endpoint
+  app.use("/api/affiliate", affiliateRouter);
+
   // Health check endpoints (no rate limiting)
   app.get("/health", healthCheck);
   app.get("/health/live", livenessProbe);
