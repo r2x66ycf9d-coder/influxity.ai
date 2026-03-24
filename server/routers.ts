@@ -454,50 +454,147 @@ export const appRouter = router({
       .input(
         z.object({
           email: z.string().email(),
-          source: z.string().optional(), // e.g. 'homepage', 'blog', 'pricing'
+          source: z.string().optional(),
           name: z.string().optional(),
         })
       )
       .mutation(async ({ input }) => {
+        const fs = await import('fs');
+        const path = await import('path');
+        const isRecoverLead = (input.source || '').startsWith('recover-audit');
+        const timestamp = new Date().toISOString();
+
+        // ── 1. PERSIST LEAD TO JSON FILE (always works, no DB required) ──────
         try {
-          // Log the subscriber for now; integrate with Beehiiv/Mailchimp via env key later
-          console.log(`[Newsletter] New subscriber: ${input.email} from ${input.source || 'unknown'}`);
-
-          // If BEEHIIV_API_KEY and BEEHIIV_PUB_ID are set, auto-add to Beehiiv
-          if (process.env.BEEHIIV_API_KEY && process.env.BEEHIIV_PUB_ID) {
-            try {
-              const response = await fetch(
-                `https://api.beehiiv.com/v2/publications/${process.env.BEEHIIV_PUB_ID}/subscriptions`,
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${process.env.BEEHIIV_API_KEY}`,
-                  },
-                  body: JSON.stringify({
-                    email: input.email,
-                    reactivate_existing: false,
-                    send_welcome_email: true,
-                    utm_source: input.source || 'influxity_website',
-                    custom_fields: input.name ? [{ name: 'name', value: input.name }] : [],
-                  }),
-                }
-              );
-              if (!response.ok) {
-                console.warn('[Newsletter] Beehiiv API error:', await response.text());
-              } else {
-                console.log(`[Newsletter] Added ${input.email} to Beehiiv successfully`);
-              }
-            } catch (beehiivError) {
-              console.warn('[Newsletter] Beehiiv integration error:', beehiivError);
-            }
+          const leadsFile = path.join(process.cwd(), 'data', isRecoverLead ? 'recover_leads.json' : 'subscribers.json');
+          const dir = path.dirname(leadsFile);
+          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+          let leads: any[] = [];
+          if (fs.existsSync(leadsFile)) {
+            try { leads = JSON.parse(fs.readFileSync(leadsFile, 'utf-8')); } catch {}
           }
-
-          return { success: true, message: 'Successfully subscribed! Check your inbox.' };
-        } catch (error) {
-          console.error('[Newsletter] Failed to subscribe:', error);
-          throw new Error('Failed to subscribe. Please try again.');
+          // Deduplicate by email
+          const exists = leads.find((l: any) => l.email === input.email);
+          if (!exists) {
+            leads.push({
+              email: input.email,
+              name: input.name || null,
+              source: input.source || 'unknown',
+              timestamp,
+              status: 'new',
+            });
+            fs.writeFileSync(leadsFile, JSON.stringify(leads, null, 2));
+            console.log(`[Lead] Saved ${input.email} to ${isRecoverLead ? 'recover_leads' : 'subscribers'}.json`);
+          } else {
+            console.log(`[Lead] Duplicate: ${input.email} already exists`);
+          }
+        } catch (fileErr) {
+          console.warn('[Lead] File persistence error:', fileErr);
         }
+
+        // ── 2. SEND IMMEDIATE WELCOME EMAIL (via SendGrid if configured) ──────
+        if (process.env.SENDGRID_API_KEY) {
+          try {
+            const subject = isRecoverLead
+              ? 'Your Influxity Recover Audit Request — What Happens Next'
+              : 'Welcome to Influxity.ai — Your AI Toolkit Is Ready';
+
+            const htmlBody = isRecoverLead
+              ? `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a">
+                  <img src="https://influxity.ai/logo.png" alt="Influxity.ai" style="height:48px;margin-bottom:24px" />
+                  <h2 style="color:#7c3aed">Your Audit Request Has Been Received</h2>
+                  <p>Hi${input.name ? ' ' + input.name : ''},</p>
+                  <p>Thank you for requesting your free retention audit. Here's what happens next:</p>
+                  <ol>
+                    <li><strong>Within 24 hours:</strong> We'll analyze your customer base using benchmark-based retention data.</li>
+                    <li><strong>You'll receive:</strong> A clear breakdown of your inactive customer segment and a realistic recovery opportunity estimate.</li>
+                    <li><strong>No pressure:</strong> The audit is completely free. We only ask you to consider activating a campaign if the numbers make sense for your business.</li>
+                  </ol>
+                  <p>In the meantime, feel free to explore the full Influxity.ai platform at <a href="https://influxity.ai" style="color:#7c3aed">influxity.ai</a>.</p>
+                  <p style="margin-top:32px;color:#666;font-size:13px">— Sean Blackwell, Founder, Influxity.ai</p>
+                </div>`
+              : `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a">
+                  <img src="https://influxity.ai/logo.png" alt="Influxity.ai" style="height:48px;margin-bottom:24px" />
+                  <h2 style="color:#7c3aed">Welcome to Influxity.ai</h2>
+                  <p>Hi${input.name ? ' ' + input.name : ''},</p>
+                  <p>You're now part of the Influxity community. Here's what you get access to:</p>
+                  <ul>
+                    <li>🤖 <strong>AI Chatbot</strong> — GPT-4 powered business assistant</li>
+                    <li>✍️ <strong>Content Generator</strong> — Blog posts, emails, and social copy in seconds</li>
+                    <li>📊 <strong>Lead Intelligence</strong> — Score and prioritize your leads automatically</li>
+                    <li>🎙️ <strong>Voice AI</strong> — Transcribe and summarize meetings instantly</li>
+                  </ul>
+                  <p><a href="https://influxity.ai/pricing" style="background:#7c3aed;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:16px">Start Your Free Trial →</a></p>
+                  <p style="margin-top:32px;color:#666;font-size:13px">— Sean Blackwell, Founder, Influxity.ai</p>
+                </div>`;
+
+            await fetch('https://api.sendgrid.com/v3/mail/send', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
+              },
+              body: JSON.stringify({
+                personalizations: [{ to: [{ email: input.email }] }],
+                from: { email: process.env.FROM_EMAIL || 'sean@influxity.ai', name: 'Sean @ Influxity.ai' },
+                subject,
+                content: [{ type: 'text/html', value: htmlBody }],
+              }),
+            });
+            console.log(`[Email] Welcome email sent to ${input.email}`);
+          } catch (emailErr) {
+            console.warn('[Email] SendGrid error:', emailErr);
+          }
+        }
+
+        // ── 3. BEEHIIV INTEGRATION (if configured) ───────────────────────────
+        if (process.env.BEEHIIV_API_KEY && process.env.BEEHIIV_PUB_ID) {
+          try {
+            const response = await fetch(
+              `https://api.beehiiv.com/v2/publications/${process.env.BEEHIIV_PUB_ID}/subscriptions`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${process.env.BEEHIIV_API_KEY}`,
+                },
+                body: JSON.stringify({
+                  email: input.email,
+                  reactivate_existing: false,
+                  send_welcome_email: false, // We send our own above
+                  utm_source: input.source || 'influxity_website',
+                }),
+              }
+            );
+            if (!response.ok) {
+              console.warn('[Beehiiv] API error:', await response.text());
+            }
+          } catch (beehiivError) {
+            console.warn('[Beehiiv] Integration error:', beehiivError);
+          }
+        }
+
+        // ── 4. NOTIFY SEAN VIA EMAIL (if new recover lead) ───────────────────
+        if (isRecoverLead && process.env.SENDGRID_API_KEY) {
+          try {
+            await fetch('https://api.sendgrid.com/v3/mail/send', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
+              },
+              body: JSON.stringify({
+                personalizations: [{ to: [{ email: 'seanblack25@gmail.com' }] }],
+                from: { email: process.env.FROM_EMAIL || 'sean@influxity.ai', name: 'Influxity System' },
+                subject: `🔥 New Recover Lead: ${input.email}`,
+                content: [{ type: 'text/html', value: `<p><strong>New audit request received!</strong></p><p><strong>Email:</strong> ${input.email}</p><p><strong>Source:</strong> ${input.source}</p><p><strong>Time:</strong> ${timestamp}</p>` }],
+              }),
+            });
+          } catch {}
+        }
+
+        console.log(`[Newsletter] Processed: ${input.email} | source: ${input.source || 'unknown'} | recover: ${isRecoverLead}`);
+        return { success: true, message: 'Successfully submitted! Check your inbox.' };
       }),
   }),
 });

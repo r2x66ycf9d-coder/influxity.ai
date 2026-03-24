@@ -12,6 +12,7 @@ import { healthCheck, livenessProbe, readinessProbe } from "./health";
 import { logger } from "./logger";
 import { seoRouter } from "../seoRoutes";
 import { affiliateRouter } from "../affiliateRoutes";
+import { handleStripeWebhook } from "../webhookHandler";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -39,7 +40,18 @@ async function startServer() {
   // Security middleware
   app.use(helmetConfig);
   app.use(corsConfig);
-  
+
+  // ─── STRIPE WEBHOOK ─────────────────────────────────────────────────────────
+  // CRITICAL: Must be registered BEFORE express.json() so Stripe can verify
+  // the raw request body signature. This is the /api/stripe/webhook endpoint
+  // registered in Stripe Dashboard.
+  app.post(
+    "/api/stripe/webhook",
+    express.raw({ type: "application/json" }),
+    handleStripeWebhook
+  );
+  // ────────────────────────────────────────────────────────────────────────────
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -54,6 +66,7 @@ async function startServer() {
   app.get("/health", healthCheck);
   app.get("/health/live", livenessProbe);
   app.get("/health/ready", readinessProbe);
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   
@@ -71,6 +84,7 @@ async function startServer() {
   
   // Security error handler
   app.use(securityErrorHandler);
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
@@ -87,6 +101,7 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    console.log(`[Stripe] Webhook endpoint active at /api/stripe/webhook`);
   });
 }
 
