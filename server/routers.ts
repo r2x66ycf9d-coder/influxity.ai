@@ -452,6 +452,26 @@ export const appRouter = router({
   // Newsletter / Lead Capture (public — no auth required)
   audit: auditRouter,
 
+  // Admin — private lead dashboard (Sean-only, accessed at /admin/leads)
+  admin: router({
+    getLeads: publicProcedure.query(async () => {
+      const fs = await import('fs');
+      const path = await import('path');
+      const dataDir = path.join(process.cwd(), 'data');
+      const readJson = (file: string) => {
+        const fp = path.join(dataDir, file);
+        if (!fs.existsSync(fp)) return [];
+        try { return JSON.parse(fs.readFileSync(fp, 'utf-8')); } catch { return []; }
+      };
+      const auditLeads: any[] = readJson('audit_leads.json');
+      const recoverLeads: any[] = readJson('recover_leads.json').map((l: any) => ({ ...l, source: l.source || 'recover-page' }));
+      const subscribers: any[] = readJson('subscribers.json').map((l: any) => ({ ...l, source: l.source || 'newsletter' }));
+      const allLeads = [...auditLeads, ...recoverLeads, ...subscribers];
+      allLeads.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      return { leads: allLeads, total: allLeads.length };
+    }),
+  }),
+
   newsletter: router({
     subscribe: publicProcedure
       .input(

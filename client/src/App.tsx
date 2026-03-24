@@ -15,6 +15,7 @@ import Pricing from "./pages/Pricing";
 import RevenueDashboard from "./pages/RevenueDashboard";
 import Recover from "./pages/Recover";
 import Onboarding from "./pages/Onboarding";
+import AdminLeads from "./pages/AdminLeads";
 
 function Router() {
   return (
@@ -30,6 +31,7 @@ function Router() {
       <Route path={"/revenue"} component={RevenueDashboard} />
       <Route path={"/recover"} component={Recover} />
       <Route path={"/onboarding"} component={Onboarding} />
+      <Route path={"/admin/leads"} component={AdminLeads} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

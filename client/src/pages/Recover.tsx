@@ -47,6 +47,27 @@ export default function Recover() {
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [auditSubmitted, setAuditSubmitted] = useState(false);
 
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const checkoutMutation = trpc.audit.createCheckoutSession.useMutation({
+    onSuccess: (data) => {
+      if (data.url) window.location.href = data.url;
+    },
+    onError: (err) => {
+      setCheckoutLoading(false);
+      toast.error(err.message || "Could not start checkout. Please try again.");
+    },
+  });
+
+  const handleActivate = () => {
+    if (!workEmail || !storeUrl) {
+      toast.error("Please run the audit first to activate.");
+      return;
+    }
+    setCheckoutLoading(true);
+    checkoutMutation.mutate({ email: workEmail, storeUrl });
+  };
+
   const auditMutation = trpc.audit.generate.useMutation({
     onSuccess: (data) => {
       setAuditResult(data.audit);
@@ -479,14 +500,25 @@ export default function Recover() {
                   <div className="space-y-3 pt-4 border-t border-border/40">
                     <p className="text-center text-sm font-semibold text-foreground mb-4">Ready to activate your recovery system?</p>
                     <Button
-                      onClick={() => window.location.href = "/pricing"}
+                      onClick={handleActivate}
+                      disabled={checkoutLoading || checkoutMutation.isPending}
                       className="w-full bg-gradient-to-r from-purple-600 to-yellow-500 hover:from-purple-700 hover:to-yellow-600 text-white font-semibold py-3 text-base"
                     >
-                      Activate Recovery System — $99
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      {checkoutLoading || checkoutMutation.isPending ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Opening checkout...
+                        </span>
+                      ) : (
+                        <>
+                          Activate Recovery System — $99
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
                     </Button>
                     <Button
-                      onClick={() => window.location.href = "/pricing"}
+                      onClick={handleActivate}
+                      disabled={checkoutLoading || checkoutMutation.isPending}
                       variant="outline"
                       className="w-full border-border/60 text-foreground hover:bg-card py-3 text-base"
                     >

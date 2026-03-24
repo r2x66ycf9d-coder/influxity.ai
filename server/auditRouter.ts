@@ -1,11 +1,19 @@
 /**
  * Influxity Recover — Audit tRPC Router
- * Exposes the audit generator as a tRPC mutation
+ * Exposes the audit generator and $99 Stripe checkout as tRPC mutations
  */
 
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { runStoreAudit } from "./auditGenerator";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+  apiVersion: "2023-10-16" as any,
+});
+
+const RECOVER_PRICE_ID =
+  process.env.STRIPE_PRICE_RECOVER || "price_1TEYnR2NSzFeHY2vhc8iReAy";
 
 export const auditRouter = router({
   /**
@@ -115,6 +123,64 @@ export const auditRouter = router({
         throw new Error(
           "Audit generation failed. Please try again or contact support."
         );
+      }
+    }),
+
+  /**
+   * createCheckoutSession — Create a Stripe $99 one-time checkout for Recover
+   * Input: email + storeUrl
+   * Output: Stripe checkout URL to redirect user
+   */
+  createCheckoutSession: publicProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+        storeUrl: z.string().min(3),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          mode: "payment",
+          customer_email: input.email,
+          line_items: [
+            {
+              price: RECOVER_PRICE_ID,
+              quantity: 1,
+            },
+          ],
+          metadata: {
+            storeUrl: input.storeUrl,
+            product: "influxity-recover",
+          },
+          success_url: `${process.env.APP_URL || "https://influxity.ai"}/onboarding?session_id={CHECKOUT_SESSION_ID}&store=${encodeURIComponent(input.storeUrl)}`,
+          cancel_url: `${process.env.APP_URL || "https://influxity.ai"}/recover?cancelled=true`,
+        });
+
+        // Update lead status to checkout_initiated
+        try {
+          const fs = await import("fs");
+          const path = await import("path");
+          const leadsFile = path.join(process.cwd(), "data", "audit_leads.json");
+          if (fs.existsSync(leadsFile)) {
+            const leads = JSON.parse(fs.readFileSync(leadsFile, "utf-8"));
+            const idx = leads.findIndex(
+              (l: { email: string; storeUrl: string }) =>
+                l.email === input.email && l.storeUrl === input.storeUrl
+            );
+            if (idx !== -1) {
+              leads[idx].status = "checkout_initiated";
+              leads[idx].stripeSessionId = session.id;
+              fs.writeFileSync(leadsFile, JSON.stringify(leads, null, 2));
+            }
+          }
+        } catch {}
+
+        return { url: session.url };
+      } catch (error) {
+        console.error("[Recover Checkout] Stripe error:", error);
+        throw new Error("Could not create checkout session. Please try again.");
       }
     }),
 });
