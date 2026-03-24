@@ -13,6 +13,7 @@ import SalesCopy from "./pages/SalesCopy";
 import Blog from "./pages/Blog";
 import Pricing from "./pages/Pricing";
 import RevenueDashboard from "./pages/RevenueDashboard";
+import Recover from "./pages/Recover";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path={"/blog"} component={Blog} />
       <Route path={"/pricing"} component={Pricing} />
       <Route path={"/revenue"} component={RevenueDashboard} />
+      <Route path={"/recover"} component={Recover} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
