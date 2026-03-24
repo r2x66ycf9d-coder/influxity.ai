@@ -6,7 +6,7 @@ export const stripeRouter = router({
   createCheckout: protectedProcedure
     .input(
       z.object({
-        plan: z.enum(["STARTER", "PROFESSIONAL"]),
+        plan: z.enum(["STARTER", "PROFESSIONAL", "ENTERPRISE"]),
       })
     )
     .mutation(async ({ ctx, input }) => {

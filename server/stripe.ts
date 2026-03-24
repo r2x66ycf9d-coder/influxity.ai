@@ -18,7 +18,7 @@ export async function createCheckoutSession(params: {
   userId: number;
   userEmail: string;
   userName: string;
-  plan: "STARTER" | "PROFESSIONAL";
+  plan: "STARTER" | "PROFESSIONAL" | "ENTERPRISE";
   origin: string;
 }) {
   const { userId, userEmail, userName, plan, origin } = params;

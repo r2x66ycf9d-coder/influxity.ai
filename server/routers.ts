@@ -447,6 +447,59 @@ export const appRouter = router({
 
   // Stripe Payment
   stripe: stripeRouter,
+
+  // Newsletter / Lead Capture (public — no auth required)
+  newsletter: router({
+    subscribe: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          source: z.string().optional(), // e.g. 'homepage', 'blog', 'pricing'
+          name: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        try {
+          // Log the subscriber for now; integrate with Beehiiv/Mailchimp via env key later
+          console.log(`[Newsletter] New subscriber: ${input.email} from ${input.source || 'unknown'}`);
+
+          // If BEEHIIV_API_KEY and BEEHIIV_PUB_ID are set, auto-add to Beehiiv
+          if (process.env.BEEHIIV_API_KEY && process.env.BEEHIIV_PUB_ID) {
+            try {
+              const response = await fetch(
+                `https://api.beehiiv.com/v2/publications/${process.env.BEEHIIV_PUB_ID}/subscriptions`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${process.env.BEEHIIV_API_KEY}`,
+                  },
+                  body: JSON.stringify({
+                    email: input.email,
+                    reactivate_existing: false,
+                    send_welcome_email: true,
+                    utm_source: input.source || 'influxity_website',
+                    custom_fields: input.name ? [{ name: 'name', value: input.name }] : [],
+                  }),
+                }
+              );
+              if (!response.ok) {
+                console.warn('[Newsletter] Beehiiv API error:', await response.text());
+              } else {
+                console.log(`[Newsletter] Added ${input.email} to Beehiiv successfully`);
+              }
+            } catch (beehiivError) {
+              console.warn('[Newsletter] Beehiiv integration error:', beehiivError);
+            }
+          }
+
+          return { success: true, message: 'Successfully subscribed! Check your inbox.' };
+        } catch (error) {
+          console.error('[Newsletter] Failed to subscribe:', error);
+          throw new Error('Failed to subscribe. Please try again.');
+        }
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

@@ -20,12 +20,26 @@ import {
   Target,
 } from "lucide-react";
 import { getLoginUrl } from "@/const";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 type Industry = "restaurants" | "ecommerce" | "service";
 
 export default function Home() {
   const [selectedIndustry, setSelectedIndustry] = useState<Industry>("restaurants");
   const [email, setEmail] = useState("");
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
+
+  const newsletterSubscribe = trpc.newsletter.subscribe.useMutation({
+    onSuccess: () => {
+      setEmailSubmitted(true);
+      setEmail("");
+      toast.success("You're in! Check your inbox for your free AI toolkit.");
+    },
+    onError: () => {
+      toast.error("Something went wrong. Please try again.");
+    },
+  });
 
   const industryData = {
     restaurants: {
@@ -70,7 +84,8 @@ export default function Home() {
 
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    window.location.href = getLoginUrl();
+    if (!email) return;
+    newsletterSubscribe.mutate({ email, source: 'homepage' });
   };
 
   return (
@@ -83,7 +98,10 @@ export default function Home() {
               <img src="/logo.png" alt="Influxity" className="h-10 w-auto" />
             </div>
             <div className="hidden md:flex items-center gap-6">
-              <a href="#pricing" className="text-sm hover:text-primary transition-colors">
+              <a href="/blog" className="text-sm hover:text-primary transition-colors">
+                Blog
+              </a>
+              <a href="/pricing" className="text-sm hover:text-primary transition-colors">
                 Pricing
               </a>
               <a href="#faq" className="text-sm hover:text-primary transition-colors">
@@ -127,9 +145,9 @@ export default function Home() {
                   required
                   className="flex-1"
                 />
-                <Button type="submit" size="lg">
-                  Start Free Trial
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                <Button type="submit" size="lg" disabled={newsletterSubscribe.isPending || emailSubmitted}>
+                  {newsletterSubscribe.isPending ? "Subscribing..." : emailSubmitted ? "✓ Subscribed!" : "Start Free Trial"}
+                  {!newsletterSubscribe.isPending && !emailSubmitted && <ArrowRight className="w-4 h-4 ml-2" />}
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground mt-3">
@@ -541,7 +559,7 @@ export default function Home() {
               <h4 className="font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <a href="#pricing" className="hover:text-foreground transition-colors">
+                  <a href="/pricing" className="hover:text-foreground transition-colors">
                     Pricing
                   </a>
                 </li>
@@ -566,7 +584,7 @@ export default function Home() {
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
+                  <a href="/blog" className="hover:text-foreground transition-colors">
                     Blog
                   </a>
                 </li>
@@ -599,7 +617,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-border/40 pt-8 text-center text-sm text-muted-foreground">
-            © 2024 Influxity.ai. All rights reserved.
+            © 2026 Influxity.ai. All rights reserved.
           </div>
         </div>
       </footer>

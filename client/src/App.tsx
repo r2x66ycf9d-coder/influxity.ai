@@ -10,6 +10,8 @@ import EmailGenerator from "./pages/EmailGenerator";
 import ContentGenerator from "./pages/ContentGenerator";
 import DataAnalysis from "./pages/DataAnalysis";
 import SalesCopy from "./pages/SalesCopy";
+import Blog from "./pages/Blog";
+import Pricing from "./pages/Pricing";
 
 function Router() {
   return (
@@ -20,6 +22,8 @@ function Router() {
       <Route path={"/content"} component={ContentGenerator} />
       <Route path={"/analysis"} component={DataAnalysis} />
       <Route path={"/sales-copy"} component={SalesCopy} />
+      <Route path={"/blog"} component={Blog} />
+      <Route path={"/pricing"} component={Pricing} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -25,7 +25,7 @@ export default function Pricing() {
     },
   });
 
-  const handleSubscribe = (plan: "STARTER" | "PROFESSIONAL") => {
+  const handleSubscribe = (plan: "STARTER" | "PROFESSIONAL" | "ENTERPRISE") => {
     if (!user) {
       window.location.href = getLoginUrl();
       return;
@@ -49,7 +49,7 @@ export default function Pricing() {
               <p className="text-muted-foreground">Perfect for getting started</p>
             </div>
             <div className="mb-6">
-              <div className="text-4xl font-bold">$99</div>
+              <div className="text-4xl font-bold">$49</div>
               <div className="text-muted-foreground">/month</div>
             </div>
             <Button
@@ -64,11 +64,15 @@ export default function Pricing() {
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-sm">1 location/store</span>
+                <span className="text-sm">AI Chatbot (GPT-4 powered)</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-sm">Basic automation</span>
+                <span className="text-sm">Content Generator</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <span className="text-sm">Lead Intelligence &amp; Scoring</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
@@ -91,7 +95,7 @@ export default function Pricing() {
               <p className="text-muted-foreground">Most popular for growing businesses</p>
             </div>
             <div className="mb-6">
-              <div className="text-4xl font-bold">$299</div>
+              <div className="text-4xl font-bold">$149</div>
               <div className="text-muted-foreground">/month</div>
             </div>
             <Button
@@ -105,15 +109,23 @@ export default function Pricing() {
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-sm">5 locations/stores</span>
+                <span className="text-sm">Everything in Starter</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-sm">All features</span>
+                <span className="text-sm">Voice AI (Whisper transcription)</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-sm">Phone support</span>
+                <span className="text-sm">Smart Scheduler</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <span className="text-sm">AI Product Recommendations</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <span className="text-sm">Priority phone support</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
@@ -136,11 +148,17 @@ export default function Pricing() {
               <p className="text-muted-foreground">For large-scale operations</p>
             </div>
             <div className="mb-6">
-              <div className="text-4xl font-bold">Custom</div>
-              <div className="text-muted-foreground">pricing</div>
+              <div className="text-4xl font-bold">$499</div>
+              <div className="text-muted-foreground">/month</div>
             </div>
-            <Button className="w-full mb-6" variant="outline" onClick={() => (window.location.href = getLoginUrl())}>
-              Contact Sales
+            <Button
+              className="w-full mb-6"
+              variant="outline"
+              onClick={() => handleSubscribe("ENTERPRISE")}
+              disabled={loadingPlan === "ENTERPRISE"}
+            >
+              {loadingPlan === "ENTERPRISE" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Start Free Trial
             </Button>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">

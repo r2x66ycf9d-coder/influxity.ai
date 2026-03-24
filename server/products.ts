@@ -1,20 +1,20 @@
 /**
  * Stripe Product Configuration
- * Define all subscription plans and their pricing here
+ * Live Price IDs activated — March 2026
+ * Products created via Stripe API and wired to live payment processing
  */
 
 export const PRODUCTS = {
   STARTER: {
     name: "Starter Plan",
-    priceId: process.env.NODE_ENV === "production" 
-      ? "price_starter_live" // Replace with actual live price ID after Stripe setup
-      : "price_starter_test",
-    amount: 9900, // $99.00 in cents
+    priceId: process.env.STRIPE_PRICE_STARTER || "price_1TEPWq2NSzFeHY2voF6hsoOF",
+    amount: 4900, // $49.00 in cents
     currency: "usd",
     interval: "month",
     features: [
-      "1 location/store",
-      "Basic automation",
+      "AI Chatbot (GPT-4 powered)",
+      "Content Generator",
+      "Lead Intelligence & Scoring",
       "Email support",
       "14-day free trial",
       "Cancel anytime",
@@ -22,16 +22,16 @@ export const PRODUCTS = {
   },
   PROFESSIONAL: {
     name: "Professional Plan",
-    priceId: process.env.NODE_ENV === "production"
-      ? "price_professional_live" // Replace with actual live price ID after Stripe setup
-      : "price_professional_test",
-    amount: 29900, // $299.00 in cents
+    priceId: process.env.STRIPE_PRICE_PROFESSIONAL || "price_1TEPWv2NSzFeHY2vJW8gKgzg",
+    amount: 14900, // $149.00 in cents
     currency: "usd",
     interval: "month",
     features: [
-      "5 locations/stores",
-      "All features",
-      "Phone support",
+      "Everything in Starter",
+      "Voice AI (Whisper transcription)",
+      "Smart Scheduler",
+      "AI Product Recommendations",
+      "Priority phone support",
       "Dedicated success manager",
       "14-day free trial",
       "30-day money-back guarantee",
@@ -39,16 +39,18 @@ export const PRODUCTS = {
   },
   ENTERPRISE: {
     name: "Enterprise Plan",
-    // Enterprise is custom pricing, handled separately
-    amount: null,
+    priceId: process.env.STRIPE_PRICE_ENTERPRISE || "price_1TEPX02NSzFeHY2vSaraFf4z",
+    amount: 49900, // $499.00 in cents
     currency: "usd",
+    interval: "month",
     features: [
-      "Unlimited locations",
+      "Everything in Professional",
+      "Unlimited AI usage",
       "Custom integrations",
-      "24/7 dedicated support",
-      "Custom features",
-      "SLA guarantee",
       "White-label options",
+      "24/7 dedicated support",
+      "SLA guarantee",
+      "Custom feature development",
     ],
   },
 } as const;
