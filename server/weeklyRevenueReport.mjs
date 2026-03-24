@@ -159,12 +159,12 @@ async function sendReport() {
 
       await transporter.sendMail({
         from: `"Influxity.ai Revenue Bot" <${process.env.GMAIL_USER}>`,
-        to: "seanblack25@gmail.com",
+        to: "sean@influxity.ai",
         subject: `💰 Influxity Weekly Report — $${report.mrr.toLocaleString()} MRR · ${report.reportDate}`,
         html: report.htmlReport,
       });
 
-      console.log(`[Weekly Report] ✅ Report sent to seanblack25@gmail.com — MRR: $${report.mrr}`);
+      console.log(`[Weekly Report] ✅ Report sent to sean@influxity.ai — MRR: $${report.mrr}`);
     } else {
       console.log("[Weekly Report] Gmail credentials not set. Report generated:");
       console.log(`  MRR: $${report.mrr} | Subscribers: ${report.totalSubscribers} | Weekly Revenue: $${report.weeklyRevenue}`);

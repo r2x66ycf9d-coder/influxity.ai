@@ -584,7 +584,7 @@ export const appRouter = router({
                 Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
               },
               body: JSON.stringify({
-                personalizations: [{ to: [{ email: 'seanblack25@gmail.com' }] }],
+                personalizations: [{ to: [{ email: 'sean@influxity.ai' }] }],
                 from: { email: process.env.FROM_EMAIL || 'sean@influxity.ai', name: 'Influxity System' },
                 subject: `🔥 New Recover Lead: ${input.email}`,
                 content: [{ type: 'text/html', value: `<p><strong>New audit request received!</strong></p><p><strong>Email:</strong> ${input.email}</p><p><strong>Source:</strong> ${input.source}</p><p><strong>Time:</strong> ${timestamp}</p>` }],
