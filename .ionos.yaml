@@ -1,0 +1,30 @@
+---
+distFolder: dist/public
+ionosDeployNow:
+  buildEnv:
+    - name: NODE_ENV
+      value: production
+  setup:
+    - name: Install dependencies
+      command: npm install
+  build:
+    - name: Build project
+      command: npm run build
+  runtime:
+    env:
+      - name: STRIPE_SECRET_KEY
+        value: ${{ secrets.STRIPE_SECRET_KEY }}
+      - name: STRIPE_PUBLISHABLE_KEY
+        value: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+      - name: STRIPE_PRICE_STARTER
+        value: ${{ secrets.STRIPE_PRICE_STARTER }}
+      - name: STRIPE_PRICE_PROFESSIONAL
+        value: ${{ secrets.STRIPE_PRICE_PROFESSIONAL }}
+      - name: STRIPE_PRICE_ENTERPRISE
+        value: ${{ secrets.STRIPE_PRICE_ENTERPRISE }}
+      - name: STRIPE_WEBHOOK_SECRET
+        value: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      - name: FROM_EMAIL
+        value: ${{ secrets.FROM_EMAIL }}
+      - name: NODE_ENV
+        value: production
