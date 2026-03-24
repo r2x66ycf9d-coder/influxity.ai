@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { stripeRouter } from "./stripeRouter";
+import { auditRouter } from "./auditRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { invokeLLM, invokeLLMStream } from "./_core/llm";
@@ -449,6 +450,8 @@ export const appRouter = router({
   stripe: stripeRouter,
 
   // Newsletter / Lead Capture (public — no auth required)
+  audit: auditRouter,
+
   newsletter: router({
     subscribe: publicProcedure
       .input(

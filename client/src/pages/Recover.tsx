@@ -16,34 +16,70 @@ import {
   Mail,
   Store,
   ChevronDown,
+  AlertTriangle,
+  DollarSign,
+  XCircle,
+  Loader2,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
+interface AuditResult {
+  summary: string;
+  issues: string[];
+  opportunities: string[];
+  revenue_lift: string;
+  message: string;
+  estimated_lost_customers: number;
+  projected_recovery_value: string;
+  churn_risk: "Low" | "Medium" | "High" | "Critical";
+  store_signals: {
+    has_email_capture: boolean;
+    has_discount_offers: boolean;
+    has_cart_recovery: boolean;
+    product_count_estimate: string;
+  };
+}
+
 export default function Recover() {
   const [storeUrl, setStoreUrl] = useState("");
   const [workEmail, setWorkEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
+  const [auditSubmitted, setAuditSubmitted] = useState(false);
 
-  const newsletterSubscribe = trpc.newsletter.subscribe.useMutation({
-    onSuccess: () => {
-      setSubmitted(true);
-      setStoreUrl("");
-      setWorkEmail("");
-      toast.success("Your free retention audit request has been received. We'll be in touch within 24 hours.");
+  const auditMutation = trpc.audit.generate.useMutation({
+    onSuccess: (data) => {
+      setAuditResult(data.audit);
+      setAuditSubmitted(true);
+      setTimeout(() => {
+        document.getElementById("audit-results")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
     },
-    onError: () => {
-      toast.error("Something went wrong. Please try again.");
+    onError: (err) => {
+      toast.error(err.message || "Audit failed. Please try again.");
     },
   });
 
   const handleAuditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!workEmail) return;
-    newsletterSubscribe.mutate({
-      email: workEmail,
-      source: `recover-audit|store:${storeUrl}`,
-    });
+    if (!workEmail || !storeUrl) {
+      toast.error("Please enter both your store URL and email address.");
+      return;
+    }
+    auditMutation.mutate({ storeUrl, email: workEmail });
+  };
+
+  const churnRiskColor = (risk: string) => {
+    if (risk === "Critical") return "text-red-400 border-red-500/40 bg-red-500/10";
+    if (risk === "High") return "text-orange-400 border-orange-500/40 bg-orange-500/10";
+    if (risk === "Medium") return "text-yellow-400 border-yellow-500/40 bg-yellow-500/10";
+    return "text-green-400 border-green-500/40 bg-green-500/10";
+  };
+
+  const churnRiskIcon = (risk: string) => {
+    if (risk === "Critical" || risk === "High") return <AlertTriangle className="h-4 w-4" />;
+    if (risk === "Medium") return <Zap className="h-4 w-4" />;
+    return <CheckCircle className="h-4 w-4" />;
   };
 
   const scrollToAudit = () => {
@@ -371,53 +407,126 @@ export default function Recover() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-xl mx-auto">
             <div className="bg-card border border-border/60 rounded-2xl p-8 md:p-10 shadow-2xl">
-              {submitted ? (
-                <div className="text-center py-8">
-                  <CheckCircle className="h-14 w-14 text-green-400 mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold mb-2">Audit Request Received</h3>
-                  <p className="text-muted-foreground">
-                    We'll review your store and send your free retention audit within 24 hours. Check your inbox.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="text-center mb-8">
-                    <Badge
-                      variant="outline"
-                      className="mb-4 border-primary/30 text-primary bg-primary/10 px-3 py-1"
-                    >
-                      Free Retention Audit
+              {/* ─── AUDIT RESULTS ─── */}
+              {auditSubmitted && auditResult ? (
+                <div id="audit-results">
+                  <div className="text-center mb-6">
+                    <Badge variant="outline" className="mb-3 border-primary/30 text-primary bg-primary/10 px-3 py-1">
+                      Your Store Audit
                     </Badge>
-                    <h2 className="text-2xl md:text-3xl font-bold mb-3">
-                      Get Your Free Retention Audit
-                    </h2>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      We'll analyze your customer base and surface your recovery opportunity — no inflated guarantees, just
-                      credible, benchmark-based insights.
+                    <h2 className="text-2xl font-bold mb-1">Audit Complete</h2>
+                    <p className="text-sm text-muted-foreground">{storeUrl}</p>
+                  </div>
+                  {/* Churn Risk */}
+                  <div className={`flex items-center justify-center gap-2 border rounded-xl px-4 py-3 mb-6 ${churnRiskColor(auditResult.churn_risk)}`}>
+                    {churnRiskIcon(auditResult.churn_risk)}
+                    <span className="font-bold text-sm">{auditResult.churn_risk} Churn Risk</span>
+                  </div>
+                  {/* Revenue Metrics */}
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className="bg-background/60 border border-border/40 rounded-xl p-4 text-center">
+                      <DollarSign className="h-5 w-5 text-yellow-400 mx-auto mb-1" />
+                      <div className="text-lg font-black text-yellow-400">{auditResult.projected_recovery_value}</div>
+                      <div className="text-xs text-muted-foreground">Projected Recovery</div>
+                    </div>
+                    <div className="bg-background/60 border border-border/40 rounded-xl p-4 text-center">
+                      <Users className="h-5 w-5 text-purple-400 mx-auto mb-1" />
+                      <div className="text-lg font-black text-purple-400">{auditResult.estimated_lost_customers.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">Est. Inactive Customers</div>
+                    </div>
+                  </div>
+                  {/* Summary */}
+                  <div className="bg-background/60 border border-border/40 rounded-xl p-4 mb-5">
+                    <p className="text-sm text-foreground leading-relaxed">{auditResult.summary}</p>
+                  </div>
+                  {/* Issues */}
+                  <div className="mb-5">
+                    <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                      <XCircle className="h-4 w-4 text-red-400" /> Key Gaps Identified
+                    </h4>
+                    <ul className="space-y-2">
+                      {auditResult.issues.map((issue, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <span className="text-red-400 mt-0.5 shrink-0">✗</span>{issue}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  {/* Opportunities */}
+                  <div className="mb-5">
+                    <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-green-400" /> Recovery Opportunities
+                    </h4>
+                    <ul className="space-y-2">
+                      {auditResult.opportunities.map((opp, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <span className="text-green-400 mt-0.5 shrink-0">✓</span>{opp}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  {/* Sample Message */}
+                  <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 mb-6">
+                    <div className="text-xs font-semibold text-purple-400 mb-2">Sample AI Recovery Message</div>
+                    <p className="text-sm text-foreground italic leading-relaxed">{auditResult.message}</p>
+                  </div>
+                  {/* Revenue Lift */}
+                  <div className="text-center mb-6">
+                    <span className="text-xs text-muted-foreground">Estimated Revenue Lift: </span>
+                    <span className="text-sm font-bold text-yellow-400">{auditResult.revenue_lift}</span>
+                  </div>
+                  {/* CTAs */}
+                  <div className="space-y-3 pt-4 border-t border-border/40">
+                    <p className="text-center text-sm font-semibold text-foreground mb-4">Ready to activate your recovery system?</p>
+                    <Button
+                      onClick={() => window.location.href = "/pricing"}
+                      className="w-full bg-gradient-to-r from-purple-600 to-yellow-500 hover:from-purple-700 hover:to-yellow-600 text-white font-semibold py-3 text-base"
+                    >
+                      Activate Recovery System — $99
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                    <Button
+                      onClick={() => window.location.href = "/pricing"}
+                      variant="outline"
+                      className="w-full border-border/60 text-foreground hover:bg-card py-3 text-base"
+                    >
+                      Pay Only on Results
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                      Audit powered by Influxity AI. Results are benchmark-based estimates.
                     </p>
                   </div>
-
+                </div>
+              ) : (
+                /* ─── AUDIT FORM ─── */
+                <>
+                  <div className="text-center mb-8">
+                    <Badge variant="outline" className="mb-4 border-primary/30 text-primary bg-primary/10 px-3 py-1">
+                      Free AI Retention Audit
+                    </Badge>
+                    <h2 className="text-2xl md:text-3xl font-bold mb-3">Get Your Free Retention Audit</h2>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      Enter your store URL and our AI analyzes your retention gaps instantly — no inflated guarantees,
+                      just credible, benchmark-based insights.
+                    </p>
+                  </div>
                   <form onSubmit={handleAuditSubmit} className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium text-foreground mb-1.5 block">
-                        Store URL
-                      </label>
+                      <label className="text-sm font-medium text-foreground mb-1.5 block">Store URL</label>
                       <div className="relative">
                         <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
-                          type="url"
+                          type="text"
                           placeholder="yourstore.myshopify.com"
                           value={storeUrl}
                           onChange={(e) => setStoreUrl(e.target.value)}
+                          required
                           className="pl-10 bg-background/60 border-border/60 focus:border-primary"
                         />
                       </div>
                     </div>
-
                     <div>
-                      <label className="text-sm font-medium text-foreground mb-1.5 block">
-                        Work Email
-                      </label>
+                      <label className="text-sm font-medium text-foreground mb-1.5 block">Work Email</label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -430,26 +539,26 @@ export default function Recover() {
                         />
                       </div>
                     </div>
-
                     <Button
                       type="submit"
-                      disabled={newsletterSubscribe.isPending}
+                      disabled={auditMutation.isPending}
                       className="w-full bg-gradient-to-r from-purple-600 to-yellow-500 hover:from-purple-700 hover:to-yellow-600 text-white font-semibold py-3 text-base"
                     >
-                      {newsletterSubscribe.isPending ? (
-                        "Submitting..."
+                      {auditMutation.isPending ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Analyzing your store...
+                        </span>
                       ) : (
                         <>
-                          Get My Free Audit
+                          Run My Free AI Audit
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </>
                       )}
                     </Button>
                   </form>
-
                   <p className="text-xs text-muted-foreground text-center mt-4 leading-relaxed">
-                    Benchmark-based estimate. No inflated guarantees. Built for operators who want credible revenue
-                    recovery, not hype.
+                    Benchmark-based estimate. No inflated guarantees. Built for operators who want credible revenue recovery, not hype.
                   </p>
                 </>
               )}
