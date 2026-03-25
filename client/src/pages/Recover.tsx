@@ -160,23 +160,22 @@ export default function Recover() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5 mb-8">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-sm font-medium text-primary">AI-Powered Customer Recovery</span>
+            <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-full px-4 py-1.5 mb-8">
+              <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+              <span className="text-sm font-medium text-red-400">🔥 Limited free audits this week — 7 spots remaining</span>
             </div>
 
             {/* Headline */}
             <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
-              Recover Lost Customers{" "}
+              Your Store Is Losing{" "}
               <span className="bg-gradient-to-r from-purple-400 to-yellow-400 bg-clip-text text-transparent">
-                Automatically with AI
+                $5K–$50K in Silent Churn
               </span>
             </h1>
 
             {/* Subheadline */}
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-              Influxity Recover helps e-commerce brands identify churn risk, surface recovery opportunities, and launch
-              personalized re-engagement campaigns — without disrupting your existing brand presence.
+              20–40% of your customers never come back after their first purchase. Most brands have zero visibility into who churns or why. Influxity Recover shows you exactly who's about to leave, how much it costs, and the exact message to win them back — in 30 seconds.
             </p>
 
             {/* CTAs */}
@@ -186,7 +185,7 @@ export default function Recover() {
                 size="lg"
                 className="bg-gradient-to-r from-purple-600 to-yellow-500 hover:from-purple-700 hover:to-yellow-600 text-white font-semibold px-8 py-4 text-base w-full sm:w-auto"
               >
-                Get Free Retention Audit
+                Run My Free Audit Now
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button
@@ -195,7 +194,7 @@ export default function Recover() {
                 size="lg"
                 className="border-border/60 text-foreground hover:bg-card px-8 py-4 text-base w-full sm:w-auto"
               >
-                See How It Works
+                No login. No integrations.
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -203,9 +202,9 @@ export default function Recover() {
             {/* Hero Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
               {[
-                { value: "3–10%", label: "Typical reactivation rate", icon: <Users className="h-5 w-5 text-purple-400" /> },
-                { value: "2–8%", label: "Repeat revenue lift", icon: <TrendingUp className="h-5 w-5 text-yellow-400" /> },
-                { value: "< 24 hrs", label: "Time to launch campaign", icon: <Zap className="h-5 w-5 text-purple-400" /> },
+                { value: "$5K–$50K", label: "Recoverable revenue per store", icon: <DollarSign className="h-5 w-5 text-yellow-400" /> },
+                { value: "20–40%", label: "Customers lost after 1st purchase", icon: <Users className="h-5 w-5 text-purple-400" /> },
+                { value: "30 sec", label: "Free audit. No setup required.", icon: <Zap className="h-5 w-5 text-purple-400" /> },
               ].map((stat, i) => (
                 <div
                   key={i}
@@ -374,47 +373,128 @@ export default function Recover() {
         </div>
       </section>
 
-      {/* ─── RESULTS / CREDIBILITY ─── */}
+      {/* ─── WHAT YOU GET ─── */}
       <section className="py-20 bg-card/30">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Built for Operators Who Want Results, Not Hype
+                What You Get
               </h2>
               <p className="text-muted-foreground max-w-xl mx-auto">
-                Influxity Recover is designed around realistic, benchmark-driven performance — not inflated promises.
+                No integrations. No setup. Just results.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-16">
               {[
                 {
                   icon: <Target className="h-6 w-6 text-purple-400" />,
-                  title: "Realistic Retention Benchmarks",
-                  body:
-                    "Every estimate is grounded in industry-standard retention data. We position recovery potential as 3–10% reactivation and 2–8% repeat revenue lift — honest, benchmark-aligned numbers.",
+                  title: "At-Risk Customer Segments",
+                  body: "See exactly which customers are about to churn — segmented by behavior, purchase recency, and risk level.",
                 },
                 {
-                  icon: <Shield className="h-6 w-6 text-yellow-400" />,
-                  title: "Brand-Safe Automation",
-                  body:
-                    "Recovery campaigns are designed to feel native to your brand, not like generic bulk email blasts. Your customer relationships stay protected.",
+                  icon: <DollarSign className="h-6 w-6 text-yellow-400" />,
+                  title: "Revenue Recovery Projection",
+                  body: "Your personalized dollar estimate of recoverable revenue sitting in your inactive customer base right now.",
                 },
                 {
-                  icon: <CheckCircle className="h-6 w-6 text-purple-400" />,
-                  title: "Outcome-First Design",
-                  body:
-                    "Every feature in Influxity Recover exists to move one metric: recovered revenue. No bloat, no vanity features, no distraction from the commercial goal.",
+                  icon: <Mail className="h-6 w-6 text-purple-400" />,
+                  title: "Ready-to-Send Win-Back Campaigns",
+                  body: "Pre-built, AI-personalized recovery messages you can deploy immediately — no copywriting, no guesswork.",
+                },
+                {
+                  icon: <Zap className="h-6 w-6 text-yellow-400" />,
+                  title: "24-Hour Execution Plan",
+                  body: "A step-by-step action plan to launch your first recovery campaign within 24 hours of completing the audit.",
                 },
               ].map((c, i) => (
-                <div key={i} className="bg-card border border-border/40 rounded-2xl p-6">
-                  <div className="mb-4">{c.icon}</div>
-                  <h3 className="font-bold mb-2">{c.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{c.body}</p>
+                <div key={i} className="bg-card border border-border/40 rounded-2xl p-6 flex gap-4">
+                  <div className="shrink-0 mt-1">{c.icon}</div>
+                  <div>
+                    <h3 className="font-bold mb-2">{c.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{c.body}</p>
+                  </div>
                 </div>
               ))}
             </div>
+
+            {/* ─── OFFER STACK ─── */}
+            <div className="text-center mb-10">
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">Choose Your Path</h2>
+              <p className="text-muted-foreground">Start free. Upgrade when you're ready to execute.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  tier: "Free",
+                  price: "$0",
+                  label: "AI Retention Audit",
+                  features: ["At-risk customer segments", "Revenue recovery estimate", "Sample win-back message", "Churn risk score"],
+                  cta: "Run Free Audit",
+                  accent: "border-border/60",
+                  highlight: false,
+                },
+                {
+                  tier: "$99",
+                  price: "$99",
+                  label: "Quick Win-Back Setup",
+                  features: ["Everything in Free", "Full recovery campaign setup", "Personalized messaging sequences", "24-hour execution plan"],
+                  cta: "Activate for $99",
+                  accent: "border-yellow-500/50",
+                  highlight: true,
+                },
+                {
+                  tier: "$299",
+                  price: "$299",
+                  label: "Full Retention System",
+                  features: ["Everything in $99", "Complete lifecycle segmentation", "Monthly retention management", "Ongoing optimization"],
+                  cta: "Book a Call",
+                  accent: "border-purple-500/50",
+                  highlight: false,
+                },
+              ].map((plan, i) => (
+                <div
+                  key={i}
+                  className={`bg-card border ${plan.accent} rounded-2xl p-7 relative ${
+                    plan.highlight ? "ring-2 ring-yellow-500/40" : ""
+                  }`}
+                >
+                  {plan.highlight && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span className="bg-gradient-to-r from-purple-600 to-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                        MOST POPULAR
+                      </span>
+                    </div>
+                  )}
+                  <div className="mb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{plan.tier}</div>
+                  <div className="text-3xl font-black text-foreground mb-1">{plan.price}</div>
+                  <div className="text-sm font-semibold text-primary mb-5">{plan.label}</div>
+                  <ul className="space-y-2 mb-7">
+                    {plan.features.map((f, j) => (
+                      <li key={j} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <CheckCircle className="h-4 w-4 text-green-400 shrink-0 mt-0.5" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    onClick={plan.tier === "$299" ? () => window.location.href = "mailto:sean@influxity.ai?subject=Full Retention System" : scrollToAudit}
+                    className={`w-full font-semibold ${
+                      plan.highlight
+                        ? "bg-gradient-to-r from-purple-600 to-yellow-500 hover:from-purple-700 hover:to-yellow-600 text-white"
+                        : "bg-card border border-border/60 text-foreground hover:bg-background"
+                    }`}
+                  >
+                    {plan.cta}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-xs text-muted-foreground mt-6">
+              Most stores start with the $99 setup. When you want us to fully map and implement your retention system, that's the $299 tier.
+            </p>
           </div>
         </div>
       </section>
@@ -536,10 +616,9 @@ export default function Recover() {
                     <Badge variant="outline" className="mb-4 border-primary/30 text-primary bg-primary/10 px-3 py-1">
                       Free AI Retention Audit
                     </Badge>
-                    <h2 className="text-2xl md:text-3xl font-bold mb-3">Get Your Free Retention Audit</h2>
+                    <h2 className="text-2xl md:text-3xl font-bold mb-3">Find Your Lost Revenue</h2>
                     <p className="text-muted-foreground text-sm leading-relaxed">
-                      Enter your store URL and our AI analyzes your retention gaps instantly — no inflated guarantees,
-                      just credible, benchmark-based insights.
+                      Drop your store URL. In 30 seconds, we'll show you who's churning, how much it's costing you, and exactly what to send to win them back.
                     </p>
                   </div>
                   <form onSubmit={handleAuditSubmit} className="space-y-4">
@@ -590,7 +669,7 @@ export default function Recover() {
                     </Button>
                   </form>
                   <p className="text-xs text-muted-foreground text-center mt-4 leading-relaxed">
-                    Benchmark-based estimate. No inflated guarantees. Built for operators who want credible revenue recovery, not hype.
+                    No login. No integrations. Just your numbers. Results in 30 seconds.
                   </p>
                 </>
               )}
