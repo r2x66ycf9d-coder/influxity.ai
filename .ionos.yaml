@@ -24,7 +24,17 @@ ionosDeployNow:
         value: ${{ secrets.STRIPE_PRICE_ENTERPRISE }}
       - name: STRIPE_WEBHOOK_SECRET
         value: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      - name: STRIPE_PRICE_RECOVER
+        value: ${{ secrets.STRIPE_PRICE_RECOVER }}
       - name: FROM_EMAIL
         value: ${{ secrets.FROM_EMAIL }}
+      - name: SENDGRID_API_KEY
+        value: ${{ secrets.SENDGRID_API_KEY }}
+      - name: BUILT_IN_FORGE_API_KEY
+        value: ${{ secrets.BUILT_IN_FORGE_API_KEY }}
+      - name: BUILT_IN_FORGE_API_URL
+        value: ${{ secrets.BUILT_IN_FORGE_API_URL }}
+      - name: SESSION_SECRET
+        value: ${{ secrets.SESSION_SECRET }}
       - name: NODE_ENV
         value: production
