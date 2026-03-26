@@ -14,6 +14,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
 
 const RECOVER_PRICE_ID =
   process.env.STRIPE_PRICE_RECOVER || "price_1TEYnR2NSzFeHY2vhc8iReAy";
+const RECOVER_PRICE_299_ID =
+  process.env.STRIPE_PRICE_RECOVER_299 || "price_1TF2S02NSzFeHY2vAYzsR9WW";
 
 export const auditRouter = router({
   /**
@@ -180,6 +182,44 @@ export const auditRouter = router({
         return { url: session.url };
       } catch (error) {
         console.error("[Recover Checkout] Stripe error:", error);
+        throw new Error("Could not create checkout session. Please try again.");
+      }
+    }),
+
+  /**
+   * createCheckoutSession299 — Create a Stripe $299 one-time checkout for Full Retention System
+   * Input: email + storeUrl
+   * Output: Stripe checkout URL to redirect user
+   */
+  createCheckoutSession299: publicProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+        storeUrl: z.string().min(3),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          mode: "payment",
+          customer_email: input.email,
+          line_items: [
+            {
+              price: RECOVER_PRICE_299_ID,
+              quantity: 1,
+            },
+          ],
+          metadata: {
+            storeUrl: input.storeUrl,
+            product: "influxity-recover-full",
+          },
+          success_url: `${process.env.APP_URL || "https://influxity.ai"}/onboarding?session_id={CHECKOUT_SESSION_ID}&store=${encodeURIComponent(input.storeUrl)}&plan=full`,
+          cancel_url: `${process.env.APP_URL || "https://influxity.ai"}/recover?cancelled=true`,
+        });
+        return { url: session.url };
+      } catch (error) {
+        console.error("[Recover Checkout 299] Stripe error:", error);
         throw new Error("Could not create checkout session. Please try again.");
       }
     }),

@@ -1,0 +1,28 @@
+[
+  {
+    "email": "test@test.com",
+    "storeUrl": "test.myshopify.com",
+    "timestamp": "2026-03-25T19:58:44.884Z",
+    "source": "recover-audit-generator",
+    "status": "checkout_initiated",
+    "stripeSessionId": "cs_live_a13sQxlYXQA67OD5OokuusuNQWjn9GvKnO0jTfUUCARhFZRqFPXpRbkVdE"
+  },
+  {
+    "email": "test@test.com",
+    "storeUrl": "gymshark.com",
+    "timestamp": "2026-03-25T20:00:32.670Z",
+    "source": "recover-audit-generator"
+  },
+  {
+    "email": "sean@influxity.ai",
+    "storeUrl": "allbirds.com",
+    "timestamp": "2026-03-25T20:01:20.410Z",
+    "source": "recover-audit-generator"
+  },
+  {
+    "email": "sean@influxity.ai",
+    "storeUrl": "gymshark.com",
+    "timestamp": "2026-03-25T20:05:20.444Z",
+    "source": "recover-audit-generator"
+  }
+]

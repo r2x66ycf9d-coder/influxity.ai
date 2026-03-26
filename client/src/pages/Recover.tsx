@@ -59,6 +59,16 @@ export default function Recover() {
     },
   });
 
+  const checkout299Mutation = trpc.audit.createCheckoutSession299.useMutation({
+    onSuccess: (data) => {
+      if (data.url) window.location.href = data.url;
+    },
+    onError: (err) => {
+      setCheckoutLoading(false);
+      toast.error(err.message || "Could not start checkout. Please try again.");
+    },
+  });
+
   const handleActivate = () => {
     if (!workEmail || !storeUrl) {
       toast.error("Please run the audit first to activate.");
@@ -66,6 +76,15 @@ export default function Recover() {
     }
     setCheckoutLoading(true);
     checkoutMutation.mutate({ email: workEmail, storeUrl });
+  };
+
+  const handleActivate299 = () => {
+    if (!workEmail || !storeUrl) {
+      scrollToAudit();
+      return;
+    }
+    setCheckoutLoading(true);
+    checkout299Mutation.mutate({ email: workEmail, storeUrl });
   };
 
   const auditMutation = trpc.audit.generate.useMutation({
@@ -449,7 +468,7 @@ export default function Recover() {
                   price: "$299",
                   label: "Full Retention System",
                   features: ["Everything in $99", "Complete lifecycle segmentation", "Monthly retention management", "Ongoing optimization"],
-                  cta: "Book a Call",
+                  cta: "Activate for $299",
                   accent: "border-purple-500/50",
                   highlight: false,
                 },
@@ -479,7 +498,7 @@ export default function Recover() {
                     ))}
                   </ul>
                   <Button
-                    onClick={plan.tier === "$299" ? () => window.location.href = "mailto:sean@influxity.ai?subject=Full Retention System" : scrollToAudit}
+                    onClick={plan.tier === "$299" ? handleActivate299 : scrollToAudit}
                     className={`w-full font-semibold ${
                       plan.highlight
                         ? "bg-gradient-to-r from-purple-600 to-yellow-500 hover:from-purple-700 hover:to-yellow-600 text-white"
