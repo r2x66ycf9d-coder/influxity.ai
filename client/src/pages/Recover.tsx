@@ -169,72 +169,138 @@ export default function Recover() {
       </nav>
 
       {/* ─── HERO SECTION ─── */}
-      <section className="relative py-24 md:py-36 overflow-hidden">
+      <section className="relative py-20 md:py-32 overflow-hidden">
         {/* Background glow effects */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-yellow-500/8 rounded-full blur-3xl" />
+          <div className="absolute top-1/4 left-1/6 w-[500px] h-[500px] bg-purple-700/15 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/6 w-[400px] h-[400px] bg-yellow-500/10 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-purple-900/10 rounded-full blur-3xl" />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-full px-4 py-1.5 mb-8">
-              <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-              <span className="text-sm font-medium text-red-400">🔥 Limited free audits this week — 7 spots remaining</span>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center max-w-6xl mx-auto">
 
-            {/* Headline */}
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
-              Your Store Is Losing{" "}
-              <span className="bg-gradient-to-r from-purple-400 to-yellow-400 bg-clip-text text-transparent">
-                $5K–$50K in Silent Churn
-              </span>
-            </h1>
+            {/* ── LEFT: Copy ── */}
+            <div className="flex flex-col">
+              {/* Eyebrow */}
+              <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-full px-4 py-1.5 mb-8 w-fit">
+                <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                <span className="text-sm font-medium text-red-400">🔥 Limited free audits this week — 7 spots remaining</span>
+              </div>
 
-            {/* Subheadline */}
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-              20–40% of your customers never come back after their first purchase. Most brands have zero visibility into who churns or why. Influxity Recover shows you exactly who's about to leave, how much it costs, and the exact message to win them back — in 30 seconds.
-            </p>
+              {/* Headline */}
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+                Your customers aren't gone.{" "}
+                <span className="bg-gradient-to-r from-yellow-400 to-yellow-300 bg-clip-text text-transparent">
+                  You just never brought them back.
+                </span>
+              </h1>
 
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-              <Button
-                onClick={scrollToAudit}
-                size="lg"
-                className="bg-gradient-to-r from-purple-600 to-yellow-500 hover:from-purple-700 hover:to-yellow-600 text-white font-semibold px-8 py-4 text-base w-full sm:w-auto"
-              >
-                Run My Free Audit Now
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-              <Button
-                onClick={scrollToHowItWorks}
-                variant="outline"
-                size="lg"
-                className="border-border/60 text-foreground hover:bg-card px-8 py-4 text-base w-full sm:w-auto"
-              >
-                No login. No integrations.
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
+              {/* Subheadline */}
+              <p className="text-lg md:text-xl text-muted-foreground mb-4 leading-relaxed">
+                Most Shopify brands lose{" "}
+                <span className="text-yellow-400 font-semibold">20–40%</span>{" "}
+                of customers after their first purchase.
+              </p>
+              <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed">
+                We identify exactly who didn't return — and show you how to win them back in{" "}
+                <span className="text-yellow-400 font-semibold">30 seconds</span>.
+              </p>
 
-            {/* Hero Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
-              {[
-                { value: "$5K–$50K", label: "Recoverable revenue per store", icon: <DollarSign className="h-5 w-5 text-yellow-400" /> },
-                { value: "20–40%", label: "Customers lost after 1st purchase", icon: <Users className="h-5 w-5 text-purple-400" /> },
-                { value: "30 sec", label: "Free audit. No setup required.", icon: <Zap className="h-5 w-5 text-purple-400" /> },
-              ].map((stat, i) => (
-                <div
-                  key={i}
-                  className="bg-card/60 backdrop-blur border border-border/40 rounded-xl px-5 py-4 text-center"
+              {/* Primary CTA */}
+              <div className="flex flex-col sm:flex-row items-start gap-4 mb-6">
+                <Button
+                  onClick={scrollToAudit}
+                  size="lg"
+                  className="bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-600 hover:to-yellow-500 text-black font-bold px-8 py-4 text-base w-full sm:w-auto shadow-lg shadow-yellow-500/25"
                 >
-                  <div className="flex justify-center mb-2">{stat.icon}</div>
-                  <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-                  <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
-                </div>
-              ))}
+                  Reveal My Lost Revenue
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Micro trust */}
+              <p className="text-sm text-muted-foreground">
+                No login&nbsp;•&nbsp;No integrations&nbsp;•&nbsp;Takes 30 seconds
+              </p>
+
+              {/* Stat row */}
+              <div className="grid grid-cols-3 gap-4 mt-10 pt-10 border-t border-border/30">
+                {[
+                  { value: "$5K–$50K", label: "Recoverable per store", icon: <DollarSign className="h-4 w-4 text-yellow-400" /> },
+                  { value: "20–40%", label: "Customers lost silently", icon: <Users className="h-4 w-4 text-purple-400" /> },
+                  { value: "30 sec", label: "Free audit, no setup", icon: <Zap className="h-4 w-4 text-yellow-400" /> },
+                ].map((stat, i) => (
+                  <div key={i} className="text-left">
+                    <div className="flex items-center gap-1.5 mb-1">{stat.icon}<span className="text-xl font-bold text-foreground">{stat.value}</span></div>
+                    <div className="text-xs text-muted-foreground">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
             </div>
+
+            {/* ── RIGHT: Audit UI Mock ── */}
+            <div className="relative">
+              <div className="bg-card/80 backdrop-blur-sm border border-yellow-500/20 rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/40">
+                {/* Mock browser bar */}
+                <div className="bg-background/90 border-b border-border/40 px-4 py-3 flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500/60" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/60" />
+                  <div className="flex-1 mx-4 bg-border/30 rounded px-3 py-1 text-xs text-muted-foreground">influxity.ai/recover — Churn Audit Results</div>
+                </div>
+
+                {/* Mock audit results */}
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-sm font-semibold text-foreground">Churn Audit Results</span>
+                    <span className="text-xs bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full font-medium">⚠ High Risk</span>
+                  </div>
+
+                  {/* Key metrics */}
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    <div className="bg-background/60 border border-border/40 rounded-xl p-4">
+                      <div className="text-xs text-muted-foreground mb-1">At-Risk Customers</div>
+                      <div className="text-2xl font-bold text-yellow-400">28%</div>
+                      <div className="text-xs text-muted-foreground">320 buyers</div>
+                    </div>
+                    <div className="bg-background/60 border border-border/40 rounded-xl p-4">
+                      <div className="text-xs text-muted-foreground mb-1">Recoverable Revenue</div>
+                      <div className="text-2xl font-bold text-yellow-400">$18,750</div>
+                      <div className="text-xs text-muted-foreground">90 days silent</div>
+                    </div>
+                  </div>
+
+                  {/* Win-back items */}
+                  <div className="space-y-2 mb-5">
+                    {[
+                      { label: "Win-Back Email Sequence", status: "Ready", color: "text-green-400" },
+                      { label: "SMS Recovery Script", status: "Ready", color: "text-green-400" },
+                      { label: "High-Risk Segment Export", status: "Ready", color: "text-green-400" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center justify-between bg-background/40 border border-border/30 rounded-lg px-3 py-2">
+                        <span className="text-xs text-foreground">{item.label}</span>
+                        <span className={`text-xs font-semibold ${item.color}`}>{item.status} →</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CTA inside mock */}
+                  <button
+                    onClick={scrollToAudit}
+                    className="w-full bg-gradient-to-r from-yellow-500 to-yellow-400 text-black font-bold text-sm py-3 rounded-lg hover:from-yellow-600 hover:to-yellow-500 transition-all"
+                  >
+                    Run My Free Audit Now →
+                  </button>
+                </div>
+              </div>
+
+              {/* Floating badge */}
+              <div className="absolute -top-4 -right-4 bg-yellow-500 text-black text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                Free This Week
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
