@@ -7,6 +7,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { runStoreAudit } from "./auditGenerator";
 import Stripe from "stripe";
+import { sendAuditResultsEmail, notifySeanNewLead } from "./emailService";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2025-12-15.clover",
@@ -118,6 +119,26 @@ export const auditRouter = router({
         console.log(
           `[Audit] Complete for ${input.storeUrl} — Risk: ${audit.churn_risk} | Lift: ${audit.revenue_lift}`
         );
+
+        // Send automated emails (non-blocking)
+        try {
+          await sendAuditResultsEmail({
+            email: input.email,
+            storeUrl: input.storeUrl,
+            churnRisk: audit.churn_risk,
+            projectedRecovery: audit.projected_recovery_value,
+            revenueLift: audit.revenue_lift,
+            summary: audit.summary,
+          });
+          await notifySeanNewLead({
+            email: input.email,
+            storeUrl: input.storeUrl,
+            churnRisk: audit.churn_risk,
+            projectedRecovery: audit.projected_recovery_value,
+          });
+        } catch (emailErr) {
+          console.warn("[Audit] Email send failed (non-blocking):", emailErr);
+        }
 
         return { success: true, audit };
       } catch (error) {
